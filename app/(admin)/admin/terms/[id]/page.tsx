@@ -1,0 +1,121 @@
+import { SectionDropdown } from "@/components/dropdowns/section-dropdown"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getTermById } from "@/prisma/term.service"
+import Link from "next/link"
+
+interface TermDetailPageProps {
+    params: Promise<{
+        id: string
+    }>
+}
+
+export default async function TermDetailPage({ params }: TermDetailPageProps) {
+    const { id } = await params
+
+    const term = await getTermById(id)
+
+    if (!term) {
+        return <div className="text-red-500">Term not found</div>
+    }
+
+    return (
+        <div className="space-y-6 max-w-4xl">
+            {/* Term Header */}
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold">{term.name}</h1>
+                    <p className="text-gray-600">
+                        Program: {term.program.name} | Academic Year: {term.academicYear.name}
+                    </p>
+                </div>
+                <Button asChild>
+
+                    <Link
+                        href={{
+                            pathname: `/admin/terms/${id}/edit`,
+                            query: { programId: term.programId },
+                        }}
+                    >
+                        Edit Term
+                    </Link>
+                </Button>
+            </div>
+
+            {/* Sections */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Sections</CardTitle>
+
+                    <Button size="sm" asChild>
+                        <Link href={{
+                            pathname: `/admin/sections/create`,
+                            query: { termId: term.id },
+                        }}>
+                            Add Section
+                        </Link>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {term.sections.length === 0 ? (
+                        <p className="text-gray-500">No sections created yet.</p>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Students</TableHead>
+                                    <TableHead>Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                                {term.sections.map((section) => (
+                                    <TableRow key={section.id}>
+                                        <TableCell className="font-medium">
+                                            {section.name}
+                                        </TableCell>
+
+
+                                        <TableCell className="font-medium">{section.studentEnrollments.length}</TableCell>
+
+                                        <TableCell>
+                                            <SectionDropdown sectionId={section.id} termId={term.id} />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Courses */}
+
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Courses Offered</CardTitle>
+                    <Button asChild>
+                        <Link href={`/admin/terms/${id}/assign`}>
+                            Add Courses
+                        </Link>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {term.courseOfferings.length === 0 ? (
+                        <p className="text-gray-500">No courses offering yet.</p>
+                    ) : (
+                        <ul className="space-y-1">
+                            {term.courseOfferings.map((offering) => (
+                                <li key={offering.id} className="flex justify-between">
+                                    <span>{offering.course.name} ({offering.course.code})</span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
