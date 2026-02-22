@@ -1,49 +1,55 @@
 'use server'
 
-import { addDepartment, editDepartment, removeDepartment} from "@/prisma/department.service"
+import { addDepartment, editDepartment, removeDepartment } from "@/prisma/department.service"
+import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 // Get the institute ID from the prisma database
 
 
-export const createDepartment = async (data: FormData) => {
-  const name = data.get("name") as string
+export const createDepartment = async (data: { name: string }) => {
+  const name = data.name?.trim()
   if (!name) {
-    throw new Error("Department name is required")
+    return { success: false, message: "Department name is required" }
   }
+  try {
+    await addDepartment(name)
 
+    revalidatePath("/admin/departments")
 
-  await addDepartment(
-    name,
-  )
-
-  redirect("/admin/departments")
+    return { success: true, message: "Department created successfully" }
+  } catch (error) {
+    return { success: false, message: "Something went wrong" }
+  }
 }
 
 
-
-interface UpdateDepartmentFormData {
-  name?: string
-  instituteId?: string
-}
-
-export const updateDepartment = async (id: string, data: FormData) => {
-  const name = data.get("name")?.toString().trim()
-  const instituteId = data.get("instituteId")?.toString()
+export const updateDepartment = async (
+  id: string,
+  data: { name: string }
+) => {
+  const name = data.name?.trim()
 
   if (!name) {
-    throw new Error("Department name is required")
+    return { success: false, message: "Department name is required" }
   }
 
-  // Call the update function
-  await editDepartment(id, {
-    name,
-    instituteId,
-  })
+  try {
+    await editDepartment(id, { name })
 
-  redirect(`/admin/departments`)
+    revalidatePath("/admin/departments")
+
+    return {
+      success: true,
+      message: "Department updated successfully",
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Something went wrong",
+    }
+  }
 }
-
 export const deleteDepartment = async (id: string) => {
   await removeDepartment(id)
 

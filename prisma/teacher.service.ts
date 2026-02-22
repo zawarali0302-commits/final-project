@@ -55,12 +55,12 @@ export async function addTeacher(name: string, email: string, designation: strin
 
 export async function editTeacher(
   id: string,
-  data: {
+  data: Partial<{
     name: string
     email: string
     designation: string
     departmentId: string
-  }
+  }>
 ) {
   if (!id) throw new Error("Teacher ID is required")
 
