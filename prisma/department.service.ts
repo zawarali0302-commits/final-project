@@ -41,10 +41,10 @@ export const addDepartment = async (name: string) => {
 
 export const editDepartment = async (
   id: string,
-  data: {
-    name?: string
-    instituteId?: string
-  }
+  data: Partial<{
+    name: string
+    instituteId: string
+  }>
 ) => {
   return prisma.department.update({
     where: { id },

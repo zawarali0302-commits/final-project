@@ -1,6 +1,7 @@
+import { deleteCourse } from "@/app/actions/course.actions"
+import { deleteProgram } from "@/app/actions/program.actions"
 import { StatCard } from "@/components/admin/stat-card"
-import { CourseDropdown } from "@/components/dropdowns/course-dropdown"
-import { ProgramDropdown } from "@/components/dropdowns/program-dropdown"
+import Dropdown from "@/components/dropdown"
 import { EmptyState } from "@/components/empty-state"
 import { Button } from "@/components/ui/button"
 import {
@@ -59,11 +60,11 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
           </p>
         </div>
 
-          <Button asChild>
-            <Link href={`/admin/departments/${id}/edit`}>
-              Update Department
-            </Link>
-          </Button>
+        <Button asChild>
+          <Link href={`/admin/departments/${id}/edit`}>
+            Update Department
+          </Link>
+        </Button>
       </div>
 
       {/* Stats */}
@@ -133,7 +134,20 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
                     </TableCell>
                     <TableCell>{program.level}</TableCell>
                     <TableCell>{program.system}</TableCell>
-                    <TableCell><ProgramDropdown id={program.id} /></TableCell>
+                    <TableCell>
+                      <Dropdown
+                        id={program.id}
+                        viewRoute={{
+                          pathname: `/admin/programs/${program.id}`,
+                          query: { departmentId: id }
+                        }}
+                        editRoute={{
+                          pathname: `/admin/programs/${program.id}/edit`,
+                          query: { departmentId: id }
+                        }}
+                        deleteAction={deleteProgram.bind(null, program.id)}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -240,7 +254,18 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
                     <TableCell>{course.code}</TableCell>
                     <TableCell>{course.credits}</TableCell>
                     <TableCell>
-                      <CourseDropdown courseId={course.id} departmentId={id} />
+                      <Dropdown
+                        id={course.id}
+                        viewRoute={{
+                          pathname: `/admin/courses/${course.id}`,
+                          query: { departmentId: id }
+                        }}
+                        editRoute={{
+                          pathname: `/admin/courses/${course.id}/edit`,
+                          query: { departmentId: id }
+                        }}
+                        deleteAction={deleteCourse.bind(null, course.id)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

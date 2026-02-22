@@ -11,7 +11,8 @@ import {
 import Link from "next/link"
 import { getProgramById } from "@/prisma/program.service"
 import { ProgramLevel } from "@/app/generated/prisma/enums"
-import { TermDropdown } from "@/components/dropdowns/term-dropdown"
+import Dropdown from "@/components/dropdown"
+import { deleteTerm } from "@/app/actions/term.actions"
 
 interface ProgramDetailPageProps {
   params: Promise<{ id: string }>
@@ -59,9 +60,6 @@ export default async function ProgramDetailPage({
           {program.terms.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No terms created yet.
-              {/* {isIntermediate
-                ? " This program currently runs as a single batch."
-                : " This program currently has no semesters."} */}
             </p>
           ) : (
             <Table>
@@ -86,8 +84,18 @@ export default async function ProgramDetailPage({
                     <TableCell className="font-medium">{term.sections.length}</TableCell>
 
                     <TableCell>
-                      <TermDropdown termId= {term.id} programId={program.id}  />
-                      {/* <SectionDropdown sectionId={section.id} programId={program.id} /> */}
+                      <Dropdown 
+                        id = {term.id}
+                        viewRoute={{
+                          pathname: `/admin/terms/${term.id}`,
+                          query: { programId: program.id },
+                        }}
+                        editRoute={{
+                          pathname: `/admin/terms/${term.id}/edit`,
+                          query: { programId: program.id },
+                        }}
+                        deleteAction={deleteTerm.bind(null, term.id)}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

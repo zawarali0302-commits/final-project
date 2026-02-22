@@ -1,4 +1,5 @@
-import { SectionDropdown } from "@/components/dropdowns/section-dropdown"
+import { deleteSection } from "@/app/actions/section.actions"
+import Dropdown from "@/components/dropdown"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -77,11 +78,21 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
                                             {section.name}
                                         </TableCell>
 
-
                                         <TableCell className="font-medium">{section.studentEnrollments.length}</TableCell>
 
                                         <TableCell>
-                                            <SectionDropdown sectionId={section.id} termId={term.id} />
+                                            <Dropdown
+                                                id={section.id}
+                                                viewRoute={{
+                                                    pathname: `/admin/sections/${section.id}`,
+                                                    query: { termId: term.id },
+                                                }}
+                                                editRoute={{
+                                                    pathname: `/admin/sections/${section.id}/edit`,
+                                                    query: { termId: term.id },
+                                                }}
+                                                deleteAction={deleteSection.bind(null, section.id)}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))}

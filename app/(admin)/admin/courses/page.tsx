@@ -9,8 +9,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CourseDropdown } from "@/components/dropdowns/course-dropdown"
 import { getCourses } from "@/prisma/course.service"
+import Dropdown from "@/components/dropdown"
+import { deleteCourse } from "@/app/actions/course.actions"
 
 export const metadata = {
   title: "Courses",
@@ -53,7 +54,17 @@ export default async function CoursesPage() {
                   <TableCell>{course.credits ?? "-"}</TableCell>
                   <TableCell>{course.department?.name}</TableCell>
                   <TableCell className="space-x-2">
-                    <CourseDropdown courseId={course.id} departmentId={course.departmentId} />
+                    <Dropdown
+                      id={course.id} 
+                      viewRoute={{
+                        pathname: `/admin/courses/${course.id}`,
+                        query: { departmentId: course.departmentId },
+                      }} 
+                      editRoute={{
+                        pathname: `/admin/courses/${course.id}/edit`,
+                        query: { departmentId: course.departmentId },
+                      }} 
+                      deleteAction={deleteCourse.bind(null, course.id)} />
                   </TableCell>
                 </TableRow>
               ))}

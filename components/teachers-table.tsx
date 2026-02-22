@@ -6,8 +6,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { TeacherDropdown } from "./dropdowns/teacher-dropdown"
 import { Card, CardContent } from "./ui/card"
+import Dropdown from "./dropdown"
+import { deleteTeacher } from "@/app/actions/teacher.actions"
 
 interface TeachersTableProps {
   teachers: any[]
@@ -38,7 +39,18 @@ const TeachersTable = ({ teachers }: TeachersTableProps) => {
                 <TableCell>{teacher.designation}</TableCell>
                 <TableCell>{teacher._count.sectionCourses}</TableCell>
                 <TableCell className="text-right">
-                  <TeacherDropdown id={teacher.id} />
+                  <Dropdown
+                  id = {teacher.id}
+                  viewRoute={{
+                    pathname: `/admin/teachers/${teacher.id}`,
+                    query: { departmentId: teacher.departmentId },
+                  }}
+                  editRoute={{
+                    pathname: `/admin/teachers/${teacher.id}/edit`,
+                    query: { departmentId: teacher.departmentId },
+                  }}
+                  deleteAction={deleteTeacher.bind(null, teacher.id)}
+                  />
                 </TableCell>
               </TableRow>
             ))}

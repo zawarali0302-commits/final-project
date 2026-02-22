@@ -1,4 +1,3 @@
-
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -13,12 +12,12 @@ import {
 import { Building2 } from "lucide-react"
 import { getDepartments } from "@/prisma/department.service"
 import { EmptyState } from "@/components/empty-state"
-import { DepartmentDropdown } from "@/components/dropdowns/department-dropdown"
+import Dropdown from "@/components/dropdown"
+import { deleteDepartment } from "@/app/actions/department.actions"
 
 const DepartmentsPage = async () => {
     const departments = await getDepartments();
     const isEmpty = departments.length === 0
-
     return (
         <div className="space-y-6">
 
@@ -70,7 +69,8 @@ const DepartmentsPage = async () => {
                                             {new Date(dept.createdAt).toLocaleDateString()}
                                         </TableCell>
                                         <TableCell>
-                                            <DepartmentDropdown id={dept.id} />
+                                            {/* <DepartmentDropdown id={dept.id} /> */}
+                                            <Dropdown id={dept.id} viewRoute={`/admin/departments/${dept.id}`} editRoute={`/admin/departments/${dept.id}/edit`} deleteAction={deleteDepartment.bind(null, dept.id)} />
                                         </TableCell>
                                     </TableRow>
                                 ))}
