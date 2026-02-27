@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import { ProgramLevel, ProgramSystem } from "@/app/generated/prisma/enums"
 import { createProgram, updateProgram } from "@/app/actions/program.actions"
+import { useServerAction } from "@/hook/useServerAction"
 
 interface ProgramFormProps {
   departmentId: string
@@ -24,14 +26,21 @@ interface ProgramFormProps {
   }
 }
 
-export function ProgramForm({
-  departmentId,
-  initialData,
-}: ProgramFormProps) {
-   // bind server action (THIS IS ALLOWED)
-    const action = initialData
-      ? updateProgram.bind(null, initialData.id)
-      : createProgram
+export function ProgramForm({ departmentId, initialData }: ProgramFormProps) {
+  const [level, setLevel] = useState<ProgramLevel | undefined>(
+    initialData?.level
+  )
+  const [system, setSystem] = useState<ProgramSystem | undefined>(
+    initialData?.system
+  )
+
+  const action = initialData
+    ? updateProgram.bind(null, initialData.id)
+    : createProgram
+
+  const { execute, isPending } = useServerAction(action, {
+    redirectTo: "/admin/departments",
+  })
 
   return (
     <Card>
@@ -42,44 +51,88 @@ export function ProgramForm({
       </CardHeader>
 
       <CardContent>
-        <form
-          action={action}
-          className="space-y-6"
-        >
+        <form action={execute} className="space-y-6">
+          {/* Name */}
           <Input
             name="name"
-            placeholder="Program name"
             defaultValue={initialData?.name}
+            placeholder="Program name"
             required
           />
 
-          {/* Hidden IDs */}
-          <input type="hidden" name="departmentId" value={departmentId} />
+          {/* Hidden Department ID */}
+          <input
+            type="hidden"
+            name="departmentId"
+            value={departmentId}
+          />
 
-          <Select name="level" defaultValue={initialData?.level}>
+          {/* Hidden Level */}
+          <input
+            type="hidden"
+            name="level"
+            value={level}
+          />
+
+          {/* Hidden System */}
+          <input
+            type="hidden"
+            name="system"
+            value={system}
+          />
+
+          {/* Level Select */}
+          <Select
+            defaultValue={initialData?.level}
+            onValueChange={(value) =>
+              setLevel(value as ProgramLevel)
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select level" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ProgramLevel.INTERMEDIATE}>Intermediate</SelectItem>
-              <SelectItem value={ProgramLevel.UNDERGRADUATE}>Undergraduate</SelectItem>
-              <SelectItem value={ProgramLevel.POSTGRADUATE}>Postgraduate</SelectItem>
+              <SelectItem value={ProgramLevel.INTERMEDIATE}>
+                Intermediate
+              </SelectItem>
+              <SelectItem value={ProgramLevel.UNDERGRADUATE}>
+                Undergraduate
+              </SelectItem>
+              <SelectItem value={ProgramLevel.POSTGRADUATE}>
+                Postgraduate
+              </SelectItem>
             </SelectContent>
           </Select>
 
-          <Select name="system" defaultValue={initialData?.system}>
+          {/* System Select */}
+          <Select
+            defaultValue={initialData?.system}
+            onValueChange={(value) =>
+              setSystem(value as ProgramSystem)
+            }
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select system" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ProgramSystem.ANNUAL}>Annual</SelectItem>
-              <SelectItem value={ProgramSystem.SEMESTER}>Semester</SelectItem>
+              <SelectItem value={ProgramSystem.ANNUAL}>
+                Annual
+              </SelectItem>
+              <SelectItem value={ProgramSystem.SEMESTER}>
+                Semester
+              </SelectItem>
             </SelectContent>
           </Select>
 
           <div className="flex justify-end">
-            <Button type="submit" >
-              {initialData ? "Update Program" : "Create Program"}
+            <Button type="submit" disabled={isPending}>
+              {isPending
+                ? initialData
+                  ? "Updating..."
+                  : "Creating..."
+                : initialData
+                ? "Update Program"
+                : "Create Program"}
             </Button>
           </div>
         </form>

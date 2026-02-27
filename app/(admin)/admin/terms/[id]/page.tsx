@@ -1,5 +1,6 @@
 import { deleteSection } from "@/app/actions/section.actions"
 import Dropdown from "@/components/dropdown"
+import UnassignTermCourseForm from "@/components/forms/unassign-term-course-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -113,17 +114,48 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
                         </Link>
                     </Button>
                 </CardHeader>
+
                 <CardContent>
                     {term.courseOfferings.length === 0 ? (
-                        <p className="text-gray-500">No courses offering yet.</p>
+                        <p className="text-muted-foreground">
+                            No courses offered yet.
+                        </p>
                     ) : (
-                        <ul className="space-y-1">
-                            {term.courseOfferings.map((offering) => (
-                                <li key={offering.id} className="flex justify-between">
-                                    <span>{offering.course.name} ({offering.course.code})</span>
-                                </li>
-                            ))}
-                        </ul>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Course Name</TableHead>
+                                    <TableHead>Code</TableHead>
+                                    <TableHead>Credits</TableHead>
+                                    <TableHead className="text-right">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                                {term.courseOfferings.map((offering) => (
+                                    <TableRow key={offering.id}>
+                                        <TableCell>
+                                            {offering.course.name}
+                                        </TableCell>
+
+                                        <TableCell className="text-muted-foreground">
+                                            {offering.course.code}
+                                        </TableCell>
+
+                                        <TableCell className="text-muted-foreground">
+                                            {offering.course.credits ?? "-"}
+                                        </TableCell>
+
+                                        <TableCell className="text-right">
+                                            <UnassignTermCourseForm 
+                                            termId = {term.id}
+                                            courseOfferingId = {offering.id}
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     )}
                 </CardContent>
             </Card>

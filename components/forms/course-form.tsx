@@ -2,10 +2,9 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react"
 import { createCourse, updateCourse } from "@/app/actions/course.actions"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { useServerAction } from "@/hook/useServerAction"
 
 interface CourseFormProps {
   departmentId: string
@@ -21,6 +20,8 @@ interface CourseFormProps {
 export function CourseForm({ departmentId, initialData }: CourseFormProps) {
   const action = initialData ? updateCourse.bind(null, initialData.id) : createCourse
 
+  const { execute, isPending } = useServerAction(action)
+
   return (
     <Card>
       <CardHeader>
@@ -31,7 +32,7 @@ export function CourseForm({ departmentId, initialData }: CourseFormProps) {
 
       <CardContent>
         <form
-          action={action}
+          action={execute}
           className="space-y-4 max-w-md"
         >
           {/* Course Name */}
@@ -67,7 +68,7 @@ export function CourseForm({ departmentId, initialData }: CourseFormProps) {
               defaultValue={initialData?.credits}
             />
           </div>
-         {/* Hidden IDs */}
+          {/* Hidden IDs */}
           <input type="hidden" name="departmentId" value={departmentId} />
           {/* Department Selection */}
           {/* <div className="space-y-1">
@@ -90,8 +91,14 @@ export function CourseForm({ departmentId, initialData }: CourseFormProps) {
             </Select>
           </div> */}
 
-          <Button type="submit" className="w-full">
-            {initialData ? "Update Course" : "Add Course"}
+          <Button type="submit" className="w-full " disabled={isPending}>
+            {isPending
+              ? initialData
+                ? "Updating..."
+                : "Creating..."
+              : initialData
+                ? "Update Course"
+                : "Create Course"}
           </Button>
         </form>
       </CardContent>

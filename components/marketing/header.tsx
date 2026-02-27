@@ -1,7 +1,19 @@
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { UserRole } from "@/app/generated/prisma/enums"
+import { Button } from "@/components/ui/button"
+import prisma from "@/lib/prisma"
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs"
+import { currentUser } from "@clerk/nextjs/server"
+import Link from "next/link"
+import DashboardButton from "../dashboard-button"
 
 const Header = () => {
+  
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur border-b">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -23,23 +35,26 @@ const Header = () => {
 
         {/* Actions */}
         <div className="flex items-center gap-3">
-          <Link href={"/login"} >
-            <Button variant={"ghost"}>
-              Login
-            </Button>
-          </Link>
-          <Link href={"/signup"}>
-            <Button>
-              Sign Up
-            </Button>
-          </Link>
-          {/* <LoginButton />
-          <SignUpButton /> */}
-        </div>
 
+          <SignedOut>
+            <SignInButton>
+              <Button variant="ghost">Login</Button>
+            </SignInButton>
+
+            <SignUpButton>
+              <Button>Sign Up</Button>
+            </SignUpButton>
+          </SignedOut>
+
+          <SignedIn>
+            <DashboardButton />
+            <UserButton />
+          </SignedIn>
+
+        </div>
       </div>
     </header>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

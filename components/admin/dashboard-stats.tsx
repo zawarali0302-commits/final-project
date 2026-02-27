@@ -1,6 +1,8 @@
 import prisma from '@/lib/prisma'
 import { StatCard } from './stat-card'
 import { Users, GraduationCap, FileText, LibraryBig } from "lucide-react"
+import { currentUser } from '@clerk/nextjs/server'
+import { getTeachersByInstituteId } from '@/prisma/teacher.service'
 
 const statItems = [
     {
@@ -29,11 +31,38 @@ const statItems = [
     },
 ]
 const DashboardStats = async () => {
-    const students = await prisma.student.count()
-    const teachers = await prisma.teacher.count()
-    const programs = await prisma.program.count()
-    const results = await prisma.result.count()
+    // 1️⃣ Get Clerk user
+    const clerkUser = await currentUser()
+    if (!clerkUser) return <div>Not authenticated</div>
 
+    // 2️⃣ Get user in DB
+    const dbUser = await prisma.user.findUnique({
+        where: { clerkId: clerkUser.id },
+    })
+    if (!dbUser?.instituteId) return <div>No institute found</div>
+
+    const teachers = await prisma.teacher.count({
+        where: { instituteId: dbUser.instituteId },
+    })
+    const students = await prisma.student.count({
+        where: { instituteId: dbUser.instituteId },
+    })
+    const programs = await prisma.program.count({
+        where: {
+            department: {
+                instituteId: dbUser.instituteId,
+            },
+        },
+    })
+    const results = await prisma.result.count({
+        where: {
+            enrollment: {
+                student: {
+                    instituteId: dbUser.instituteId,
+                },
+            },
+        },
+    })
 
     statItems[1].value = teachers
     statItems[0].value = students

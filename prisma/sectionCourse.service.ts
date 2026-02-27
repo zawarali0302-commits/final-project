@@ -50,18 +50,30 @@ export const addCourseToSection = async (sectionId: string, courseOfferingId: st
 
 
 
-export async function removeCourseFromSection(sectionCourseId: string, sectionId: string) {
+export async function removeCourseFromSection(
+  sectionCourseId: string,
+  sectionId: string
+) {
+  if (!sectionCourseId || !sectionId) {
+    throw new Error("Missing required fields")
+  }
 
-  if (!sectionCourseId || !sectionId) return
   const record = await prisma.sectionCourse.findUnique({
     where: { id: sectionCourseId },
   })
-  if (!record) throw new Error("SectionCourse record not found")
-    
+
+  if (!record) {
+    throw new Error("SectionCourse record not found")
+  }
+
+  // ✅ Ensure the course belongs to this section
+  if (record.sectionId !== sectionId) {
+    throw new Error("Invalid section-course relation")
+  }
+
   await prisma.sectionCourse.delete({
     where: { id: sectionCourseId },
   })
-
 }
 
 // --- Get all courseOffering IDs assigned to a section ---

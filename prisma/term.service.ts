@@ -1,8 +1,30 @@
 import prisma from "@/lib/prisma"
 
 // --- Get all terms ---
-export const getTerms = async () => {
+export const getTermsByInstitute = async (instituteId: string) => {
   return prisma.term.findMany({
+    where: { program: { department: { instituteId } } },
+    include: {
+      program: true,
+      academicYear: true,
+      sections: {
+        include: {
+          studentEnrollments: {
+            include: { student: true },
+          },
+        },
+      },
+      courseOfferings: {
+        include: {
+          course: true,
+        },
+      },
+    },
+  })
+}
+export const getTerms = async (programId: string) => {
+  return prisma.term.findMany({
+    where: { programId },
     include: {
       program: true,
       academicYear: true,

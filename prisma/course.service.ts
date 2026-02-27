@@ -1,13 +1,30 @@
 import prisma from "@/lib/prisma"
 
-export async function getCourses() {
+// export async function getCourses() {
+//   return prisma.course.findMany({
+//     include: { 
+//       department: true
+//     },
+//     orderBy: { name: "asc" },
+//   })
+// }
+
+export async function getCoursesByInstituteId(instituteId: string) {
   return prisma.course.findMany({
-    include: { 
-      department: true
+    where: {
+      department: {
+        instituteId: instituteId, // ✅ filter courses by related institute
+      },
     },
-    orderBy: { name: "asc" },
+    include: {
+      department: true, // fetch department info
+    },
+    orderBy: {
+      name: "asc",
+    },
   })
 }
+
 export async function getCoursesByDepartment(departmentId: string) {
   return prisma.course.findMany({
     where: { departmentId },

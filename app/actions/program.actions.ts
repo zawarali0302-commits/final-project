@@ -2,7 +2,6 @@
 
 import { addProgram, editProgram, removeProgram } from "@/prisma/program.service"
 import { ProgramLevel, ProgramSystem } from "../generated/prisma/client"
-import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
 export const createProgram = async (data: FormData) => {
@@ -11,10 +10,15 @@ export const createProgram = async (data: FormData) => {
     const system = data.get("system") as ProgramSystem
     const departmentId = data.get("departmentId") as string
 
-    await addProgram(name, level, system, departmentId)
+    try {
+        await addProgram(name, level, system, departmentId)
 
-    redirect(`/admin/departments/${departmentId}`)
-    
+        revalidatePath(`/admin/departments/${departmentId}`)
+        return { success: true, message: "Program created successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to create program" }
+    }
+
 }
 
 export const updateProgram = async (id: string, data: FormData) => {
@@ -23,17 +27,27 @@ export const updateProgram = async (id: string, data: FormData) => {
     const system = data.get("system") as ProgramSystem
     const departmentId = data.get("departmentId") as string
 
-    await editProgram(id, {
-        name,
-        level,
-        system,
-        departmentId,
-   })
+    try {
+        await editProgram(id, {
+            name,
+            level,
+            system,
+            departmentId,
+        })
 
-    redirect(`/admin/departments/${departmentId}/programs`)
+        revalidatePath(`/admin/departments/${departmentId}/programs`)
+        return { success: true, message: "Program updated successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to update program" }
+    }
 }
 
 export const deleteProgram = async (id: string) => {
-    await removeProgram(id)
-    revalidatePath("/")
+    try {
+        await removeProgram(id)
+        revalidatePath("/")
+        return { success: true, message: "Program deleted successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to delete program" }
+    }
 }

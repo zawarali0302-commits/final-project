@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createTeacher, updateTeacher } from "@/app/actions/teacher.actions"
+import { useServerAction } from "@/hook/useServerAction"
 
 interface TeacherFormProps {
   departments: {
@@ -30,8 +31,10 @@ export default function TeacherForm({
     ? updateTeacher.bind(null, initialData.id)
     : createTeacher
 
+  const { execute, isPending } = useServerAction(action)
+
   return (
-    <form action={action} className="space-y-4">
+    <form action={execute} className="space-y-4">
       <input type="hidden" name="instituteId" value={instituteId} />
 
       <div className="space-y-2">
@@ -76,7 +79,13 @@ export default function TeacherForm({
       </div>
 
       <Button type="submit" className="w-full">
-        {initialData ? "Update Teacher" : "Create Teacher"}
+        {isPending
+          ? initialData
+            ? "Updating..."
+            : "Creating..."
+          : initialData
+            ? "Update Teacher"
+            : "Create Teacher"}
       </Button>
     </form>
   )

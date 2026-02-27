@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useServerAction } from "@/hook/useServerAction"
 
 interface Teacher {
   id: string
@@ -35,11 +36,9 @@ interface AssignTeachersFormProps {
   teachers: Teacher[]
 }
 
-export default function AssignTeachersToSectionCoursesForm({
-  sectionId,
-  sectionCourses,
-  teachers,
-}: AssignTeachersFormProps) {
+export default function AssignTeachersToSectionCoursesForm({ sectionId, sectionCourses, teachers }: AssignTeachersFormProps) {
+  const action = updateSectionCourseTeacher
+  const { execute, isPending } = useServerAction(action)
   if (sectionCourses.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -69,7 +68,7 @@ export default function AssignTeachersToSectionCoursesForm({
               {sc.teacher ? sc.teacher.name : "Not Assigned"}
             </TableCell>
             <TableCell>
-              <form action={updateSectionCourseTeacher} className="flex items-center gap-2">
+              <form action={execute} className="flex items-center gap-2">
                 <input
                   type="hidden"
                   name="sectionCourseId"
@@ -94,8 +93,8 @@ export default function AssignTeachersToSectionCoursesForm({
                   ))}
                 </select>
 
-                <Button size="sm" type="submit">
-                  Save
+                <Button size="sm" type="submit" disabled={isPending}>
+                  {isPending ? "Saving..." : "Save"}
                 </Button>
               </form>
             </TableCell>

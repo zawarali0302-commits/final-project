@@ -10,13 +10,32 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Building2 } from "lucide-react"
-import { getDepartments } from "@/prisma/department.service"
 import { EmptyState } from "@/components/empty-state"
 import Dropdown from "@/components/dropdown"
 import { deleteDepartment } from "@/app/actions/department.actions"
+import { getDepartmentsByInstitute } from "@/prisma/department.service"
+import prisma from "@/lib/prisma"
+import { currentUser } from "@clerk/nextjs/server"
 
 const DepartmentsPage = async () => {
-    const departments = await getDepartments();
+    const clerkUser = await currentUser()
+
+    if (!clerkUser) {
+        return <div>Not authenticated</div>
+    }
+
+    const dbUser = await prisma.user.findUnique({
+        where: { clerkId: clerkUser.id },
+    })
+
+    if (!dbUser?.instituteId) {
+        return <div>No institute found</div>
+    }
+
+    const departments = await getDepartmentsByInstitute(
+        dbUser.instituteId
+    )
+
     const isEmpty = departments.length === 0
     return (
         <div className="space-y-6">
@@ -29,10 +48,14 @@ const DepartmentsPage = async () => {
                         Manage academic departments in your institution
                     </p>
                 </div>
-
-                <Link href="/admin/departments/create">
-                    <Button>Add Department</Button>
-                </Link>
+                <Button asChild>
+                    <Link href={{
+                        pathname: "/admin/departments/create",
+                        query: { instituteId: dbUser.instituteId },
+                    }}>
+                        Add Department
+                    </Link>
+                </Button>
             </div>
             {/* Empty State */}
             {isEmpty ? (
@@ -41,7 +64,10 @@ const DepartmentsPage = async () => {
                     title="No departments yet"
                     description="Departments help organize teachers, classes, and subjects."
                     button="Add department"
-                    href="/admin/departments/create"
+                    href={{
+                        pathname: "/admin/departments/create",
+                        query: { instituteId: dbUser.instituteId },
+                    }}
                 />
             ) : (
                 <Card>
@@ -52,10 +78,8 @@ const DepartmentsPage = async () => {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Created</TableHead>
                                     <TableHead className="w-12 text-right">Actions</TableHead>
-
                                 </TableRow>
                             </TableHeader>
-
                             <TableBody>
                                 {departments.map((dept) => (
                                     <TableRow
@@ -63,7 +87,10 @@ const DepartmentsPage = async () => {
                                         className="cursor-pointer hover:bg-muted transition-colors"
                                     >
                                         <TableCell className="font-medium">
-                                            <Link href={`/admin/departments/${dept.id}`}>{dept.name}</Link>
+                                            <Link href={{
+                                                pathname: `/admin/departments/${dept.id}`,
+                                                query: { instituteId: dbUser.instituteId },
+                                            }}>{dept.name}</Link>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">
                                             {new Date(dept.createdAt).toLocaleDateString()}

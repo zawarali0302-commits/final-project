@@ -1,33 +1,31 @@
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import Link from "next/link"
-import { getPrograms } from "@/prisma/program.service"
-import Dropdown from "@/components/dropdown"
-import { deleteProgram } from "@/app/actions/program.actions"
+import prisma from "@/lib/prisma"
+import { currentUser } from "@clerk/nextjs/server"
+import { getProgramsByInstitute } from "@/prisma/program.service"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function ProgramsPage() {
-  const programs = await getPrograms()
+  // 1️⃣ Get Clerk user
+  const clerkUser = await currentUser()
+  if (!clerkUser) return <div>Not authenticated</div>
+
+  // 2️⃣ Get user in DB
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: clerkUser.id },
+  })
+  if (!dbUser?.instituteId) return <div>No institute found</div>
+
+  // 3️⃣ Get all programs in that institute
+  const programs = await getProgramsByInstitute(dbUser.instituteId)
+  const isEmpty = programs.length === 0
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Programs</h1>
-        <p className="text-muted-foreground">
-          List of all programs in your Institute.
-        </p>
-      </div>
-
+      <h1 className="text-2xl font-bold">Programs</h1>
       <Card>
-        <CardContent className="pt-6">
-          {programs.length === 0 ? (
-            <p>No programs found</p>
+        <CardContent>
+          {isEmpty ? (
+            <p>No programs found in your institute</p>
           ) : (
             <Table>
               <TableHeader>
@@ -36,52 +34,15 @@ export default async function ProgramsPage() {
                   <TableHead>Department</TableHead>
                   <TableHead>Level</TableHead>
                   <TableHead>System</TableHead>
-                  <TableHead className="w-12 text-right">
-                    Actions
-                  </TableHead>
                 </TableRow>
               </TableHeader>
-
               <TableBody>
                 {programs.map((program) => (
-                  <TableRow
-                    key={program.id}
-                    className="hover:bg-muted transition-colors"
-                  >
-                    <TableCell className="font-medium">
-                      <Link
-                        href={{
-                          pathname: `/admin/programs/${program.id}`,
-                          query: { departmentId: program.departmentId },
-                        }}
-                        className="hover:underline"
-                      >
-                        {program.name}
-                      </Link>
-                    </TableCell>
-
-                    <TableCell>
-                      {program.department.name}
-                    </TableCell>
-
+                  <TableRow key={program.id}>
+                    <TableCell>{program.name}</TableCell>
+                    <TableCell>{program.department.name}</TableCell>
                     <TableCell>{program.level}</TableCell>
-
                     <TableCell>{program.system}</TableCell>
-
-                    <TableCell className="text-right">
-                      <Dropdown
-                        id={program.id}
-                        viewRoute={{
-                          pathname: `/admin/programs/${program.id}`,
-                          query: { departmentId: program.departmentId },
-                        }}
-                        editRoute={{
-                          pathname: `/admin/programs/${program.id}/edit`,
-                          query: { departmentId: program.departmentId },
-                        }}
-                        deleteAction={deleteProgram.bind(null, program.id)}
-                      />
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

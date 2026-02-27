@@ -1,10 +1,9 @@
 import prisma from "@/lib/prisma"
 
-
-// prisma/department.service.ts
-
-export const getDepartments = async () => {
-  return prisma.department.findMany()
+export const getDepartmentsByInstitute = async (instituteId: string) => {
+  return prisma.department.findMany({
+    where: { instituteId }
+  })
 }
 
 
@@ -22,9 +21,9 @@ export const getDepartmentById = async (id: string) => {
   return department
 }
 
-export const addDepartment = async (name: string) => {
-  const institute = await prisma.institute.findFirst({
-    select: { id: true }
+export const addDepartment = async (name: string, instituteId: string) => {
+  const institute = await prisma.institute.findUnique({
+    where: { id: instituteId }
   })
 
   if (!institute) {
@@ -73,15 +72,3 @@ export const removeDepartment = async (id: string) => {
     where: { id },
   })
 }
-
-// export const addDepartment = async (name: string) => {
-//         const department = await prisma.department.create({
-//             data: {
-//                 name,
-//                 classes,
-//                 teachers,
-//                 subjects
-//             }
-//         })
-//     return department
-// }

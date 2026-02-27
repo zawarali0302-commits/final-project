@@ -34,6 +34,41 @@ export async function getSections() {
   })
 }
 
+export async function getSectionsByInstitute(instituteId: string) {
+  return prisma.section.findMany({
+    where: { term: { program: { 
+      department: { instituteId }
+     } } },
+    include: {
+      term: {
+        include: {
+          program: true,
+          academicYear: true,
+        },
+      },
+      studentEnrollments: {
+        include: {
+          student: {
+            include: {
+              session: true,
+            },
+          },
+        },
+      },
+      sectionCourses: {
+        include: {
+          teacher: true,
+          courseOffering: {
+            include: {
+              course: true,
+            },
+          }
+        },
+      },
+    },
+  })
+}
+
 // --- Get section by ID with all necessary relations ---
 export async function getSectionById(id: string) {
   return prisma.section.findUnique({

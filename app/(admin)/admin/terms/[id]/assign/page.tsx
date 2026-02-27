@@ -1,8 +1,9 @@
-import TermCourseAssignFormRHF from '@/components/forms/term-course-assign-form'
+import AssignCourseToTermForm from '@/components/forms/term-course-assign-form'
+import { getCoursesByDepartment } from '@/prisma/course.service'
 import { getTermById } from '@/prisma/term.service'
 
 interface AssignCourseToTermProps {
-    params: Promise<{ id: string }> 
+    params: Promise<{ id: string }>
 }
 
 const AssignCourseToTerm = async ({ params }: AssignCourseToTermProps) => {
@@ -10,6 +11,8 @@ const AssignCourseToTerm = async ({ params }: AssignCourseToTermProps) => {
     const term = await getTermById(id)
 
     if (!term) return <p>Term not found</p>
+
+    const courses = await getCoursesByDepartment(term.program.departmentId)
 
     return (
         <div className="space-y-6 max-w-4xl">
@@ -22,9 +25,9 @@ const AssignCourseToTerm = async ({ params }: AssignCourseToTermProps) => {
                 </div>
             </div>
 
-            <TermCourseAssignFormRHF
+            <AssignCourseToTermForm
                 termId={term.id}
-                departmentId={term.program.departmentId}
+                courses={courses}
             />
         </div>
     )

@@ -1,12 +1,21 @@
 import { ProgramLevel, ProgramSystem } from "@/app/generated/prisma/enums"
 import prisma from "@/lib/prisma"
 
+export const getProgramsByInstitute = async (instituteId: string) => {
+  return prisma.program.findMany({
+    where: { department: { instituteId } },
+    include: { department: true },
+    orderBy: { name: "asc" },
+  })
+}
+
 // --- Get all programs with their departments ---
-export const getPrograms = async () => {
+export const getPrograms = async (departmentId: string) => {
   return prisma.program.findMany({
     include: {
       department: true,
     },
+    where: { departmentId } 
   })
 }
 

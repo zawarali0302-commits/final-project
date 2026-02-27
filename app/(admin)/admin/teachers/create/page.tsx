@@ -1,18 +1,26 @@
 import prisma from "@/lib/prisma"
 import TeacherForm from "@/components/forms/teacher-form"
+import { currentUser } from "@clerk/nextjs/server"
+import { getDepartmentsByInstitute } from "@/prisma/department.service"
 
-import { getDepartments } from "@/prisma/department.service"
 
 export default async function CreateTeacherPage() {
-  // ⚠️ Replace this with session-based instituteId later
-  const institute = await prisma.institute.findFirst()
+  // 1️⃣ Get Clerk user
+  const clerkUser = await currentUser()
+  if (!clerkUser) return <div>Not authenticated</div>
 
-  if (!institute) {
-    return <div>No institute found.</div>
-  }
+  // 2️⃣ Get user in DB
+  const dbUser = await prisma.user.findUnique({
+    where: { clerkId: clerkUser.id },
+  })
+  if (!dbUser?.instituteId) return <div>No institute found</div>
 
-  const departments = await getDepartments()
-
+  // 3️⃣ Get all programs in that institute
+  const departments = await getDepartmentsByInstitute(dbUser.instituteId)
+  const institute = await prisma.institute.findUnique({
+    where: { id: dbUser.instituteId },
+  })
+  if (!institute) return <div>No institute found</div>
   return (
     <div className="max-w-2xl space-y-6">
       <div>
@@ -29,17 +37,3 @@ export default async function CreateTeacherPage() {
     </div>
   )
 }
-
-// const page = async () => {
-//   const institute = await prisma.institute.findFirst()
-//   const departments = await getDepartments()
-
-//   return (
-//     <div>
-//       instituteId: {institute?.id}
-//       department: {departments.map((d) => d.name).join(", ")}
-//     </div>
-//   )
-// }
-
-// export default page

@@ -4,6 +4,7 @@ import { QuickActions } from "@/components/admin/quick-actions";
 import { SkeletonText } from "@/components/skeleton-text";
 
 export default function AdminDashboard() {
+  
   return (
     <div className="space-y-6">
       <DashboardHeader />

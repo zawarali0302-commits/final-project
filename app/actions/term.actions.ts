@@ -3,7 +3,6 @@
 import { getProgramById } from "@/prisma/program.service"
 import { addTerm, editTerm, removeTerm } from "@/prisma/term.service"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 export const createTerm = async (data: FormData) => {
     const name = data.get("name") as string
@@ -15,11 +14,18 @@ export const createTerm = async (data: FormData) => {
     }
 
     const program = await getProgramById(programId)
+    if (!program) {
+        throw new Error("Program not found")
+    }
 
+    try {
+        await addTerm(name, programId, academicYearId)
 
-    await addTerm(name, programId, academicYearId)
-
-    redirect(`/admin/programs/${programId}?departmentId=${program?.departmentId}`)
+        revalidatePath(`/admin/programs/${programId}?departmentId=${program?.departmentId}`)
+        return { success: true, message: "Term created successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to create term" }
+    }
 }
 
 export const updateTerm = async (id: string, data: FormData) => {
@@ -27,16 +33,31 @@ export const updateTerm = async (id: string, data: FormData) => {
     const programId = data.get("programId") as string
     const academicYearId = data.get("academicYearId") as string
 
-    
-    await editTerm(id, {
-        name,
-        programId,
-        academicYearId
-    })
+    const program = await getProgramById(programId)
+    if (!program) {
+        throw new Error("Program not found")
+    }
+
+    try {
+        await editTerm(id, {
+            name,
+            programId,
+            academicYearId
+        })
+        revalidatePath(`/admin/programs/${programId}?departmentId=${program?.departmentId}`)
+        return { success: true, message: "Term updated successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to update term" }
+    }
 }
 
 export const deleteTerm = async (id: string) => {
-    await removeTerm(id)
+    try {
+        await removeTerm(id)
 
-    revalidatePath("/")
+        revalidatePath("/")
+        return { success: true, message: "Term deleted successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to delete term" }
+    }
 }

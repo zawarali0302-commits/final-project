@@ -1,7 +1,11 @@
+import { UserRole } from "@/app/generated/prisma/enums"
 import prisma from "@/lib/prisma"
 
-export const getTeachers = async () => {
+export const getTeachersByInstituteId = async (instituteId: string) => {
   return prisma.teacher.findMany({
+    where: {
+      instituteId,
+    },
     include: {
       department: true,
       _count: {
@@ -24,33 +28,43 @@ export const getTeacherById = async (id: string) => {
   })
 }
 
-export async function addTeacher(name: string, email: string, designation: string, departmentId: string, instituteId: string) {
-
+export async function addTeacher(
+  name: string,
+  email: string,
+  designation: string,
+  departmentId: string,
+  instituteId: string
+) {
   if (!name || !email || !designation || !departmentId || !instituteId) {
     throw new Error("All fields are required")
   }
 
-  await prisma.$transaction(async (tx) => {
-    const user = await tx.user.create({
-      data: {
-        email,
-        role: "TEACHER",
-        instituteId,
-      },
-    })
-
-    await tx.teacher.create({
-      data: {
-        name,
-        email,
-        designation,
-        departmentId,
-        instituteId,
-        userId: user.id,
-      },
-    })
+  // Create teacher and a placeholder user (without clerkId)
+  return prisma.$transaction(async (tx) => {
+  // 1️⃣ Create the User first
+  const user = await tx.user.create({
+    data: {
+      email,
+      role: UserRole.TEACHER,
+      instituteId,
+      isEmailVerified: true,
+    },
   })
 
+  // 2️⃣ Create the Teacher with the generated userId
+  const teacher = await tx.teacher.create({
+    data: {
+      name,
+      email,
+      designation,
+      departmentId,
+      instituteId,
+      userId: user.id,
+    },
+  })
+
+  return { teacher, user }
+})
 }
 
 export async function editTeacher(

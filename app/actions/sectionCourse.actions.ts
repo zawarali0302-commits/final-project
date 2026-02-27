@@ -4,27 +4,53 @@ import { addCourseToSection, addSectionCourseTeacher, removeCourseFromSection } 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
-export const assignCourseToSection = async (formData: FormData) => {
-  const sectionId = formData.get("sectionId") as string
-  const courseOfferingId = formData.get("courseOfferingId") as string
+export const assignCourseToSection = async (data: FormData) => {
+  const sectionId = data.get("sectionId") as string
+  const courseOfferingId = data.get("courseOfferingId") as string
 
   if (!sectionId || !courseOfferingId) {
     throw new Error("Missing sectionId or courseOfferingId")
   }
 
-  await addCourseToSection(sectionId, courseOfferingId)
-  redirect(`/admin/sections/${sectionId}`)
+  try {
+    await addCourseToSection(sectionId, courseOfferingId)
+    revalidatePath(`/admin/sections/${sectionId}`)
+    return {success: true, message: "Course assigned to section successfully"}
+  } catch (error) {
+    return {success: false, message: "Failed to assign course to section"}
+  }
 }
 
-export const unassignCourseFromSection = async (formData: FormData) => {
-  const sectionCourseId = formData.get("sectionCourseId") as string
-  const sectionId = formData.get("sectionId") as string
 
-  if (!sectionCourseId || !sectionId) return
-  
+export const unassignCourseFromSection = async (data: FormData) => {
+  const sectionCourseId = data.get("sectionCourseId") as string
+  const sectionId = data.get("sectionId") as string
 
-  await removeCourseFromSection(sectionCourseId, sectionId)
-  revalidatePath("/")
+  if (!sectionCourseId || !sectionId) {
+    return {
+      success: false,
+      message: "Missing required fields",
+    }
+  }
+
+  try {
+    await removeCourseFromSection(sectionCourseId, sectionId)
+
+    // ✅ Revalidate ONLY this section page
+    revalidatePath(`/admin/sections/${sectionId}`)
+
+    return {
+      success: true,
+      message: "Course unassigned successfully",
+    }
+  } catch (error) {
+    console.error(error)
+
+    return {
+      success: false,
+      message: "Failed to unassign course",
+    }
+  }
 }
 
 export const updateSectionCourseTeacher = async (formData: FormData) => {
@@ -35,6 +61,12 @@ export const updateSectionCourseTeacher = async (formData: FormData) => {
     throw new Error("Missing sectionCourseId or teacherId")
   }
 
-  await addSectionCourseTeacher(sectionCourseId, teacherId)
-  revalidatePath("/")
+  try {
+    await addSectionCourseTeacher(sectionCourseId, teacherId)
+    revalidatePath("/")
+    return {success: true, message: "Teacher assigned successfully"}
+  } catch (error) {
+    return {success: false, message: "Failed to assign teacher"}
+    
+  }
 }

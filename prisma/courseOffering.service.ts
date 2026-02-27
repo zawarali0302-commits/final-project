@@ -38,8 +38,27 @@ export const getTermCourses = async (termId: string) => {
 /**
  * Remove a course from a term
  */
-export const removeCourseFromTerm = async (courseOfferingId: string) => {
-  return prisma.courseOffering.delete({
+export const removeCourseFromTerm = async (
+  courseOfferingId: string,
+  termId: string
+) => {
+  if (!courseOfferingId || !termId) {
+    throw new Error("Missing required fields")
+  }
+
+  const record = await prisma.courseOffering.findUnique({
+    where: { id: courseOfferingId },
+  })
+
+  if (!record) {
+    throw new Error("CourseOffering not found")
+  }
+
+  if (record.termId !== termId) {
+    throw new Error("Invalid term-course relation")
+  }
+
+  await prisma.courseOffering.delete({
     where: { id: courseOfferingId },
   })
 }

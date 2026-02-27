@@ -2,20 +2,20 @@
 
 import { addDepartment, editDepartment, removeDepartment } from "@/prisma/department.service"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
-// Get the institute ID from the prisma database
-
-
-export const createDepartment = async (data: { name: string }) => {
-  const name = data.name?.trim()
+export const createDepartment = async (data: FormData) => {
+  const name = data.get("name")?.toString().trim()
+  const instituteId = data.get("instituteId")?.toString().trim()
   if (!name) {
     return { success: false, message: "Department name is required" }
   }
+  if (!instituteId) {
+    return { success: false, message: "Institute ID is required" }
+  }
   try {
-    await addDepartment(name)
+    await addDepartment(name, instituteId)
 
-    revalidatePath("/admin/departments")
+    revalidatePath("/admin/departments?instituteId=" + instituteId)
 
     return { success: true, message: "Department created successfully" }
   } catch (error) {
@@ -26,9 +26,9 @@ export const createDepartment = async (data: { name: string }) => {
 
 export const updateDepartment = async (
   id: string,
-  data: { name: string }
+  data: FormData
 ) => {
-  const name = data.name?.trim()
+  const name = data.get("name")?.toString().trim()
 
   if (!name) {
     return { success: false, message: "Department name is required" }
@@ -51,7 +51,13 @@ export const updateDepartment = async (
   }
 }
 export const deleteDepartment = async (id: string) => {
-  await removeDepartment(id)
+  try {
+    await removeDepartment(id)
 
-  redirect("/admin/departments")
+    revalidatePath("/")
+
+    return { success: true, message: "Department deleted successfully" }
+  } catch (error) {
+    return { success: false, message: "Something went wrong" }
+  }
 }

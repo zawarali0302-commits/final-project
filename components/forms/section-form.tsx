@@ -4,6 +4,7 @@ import { createSection, updateSection } from "@/app/actions/section.actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useServerAction } from "@/hook/useServerAction"
 
 interface SectionFormProps {
   termId: string
@@ -18,6 +19,8 @@ export function SectionForm({ termId, initialData }: SectionFormProps) {
     ? updateSection.bind(null, initialData.id)
     : createSection
 
+  const { execute, isPending } = useServerAction(action)
+
   return (
     <Card>
       <CardHeader>
@@ -27,7 +30,7 @@ export function SectionForm({ termId, initialData }: SectionFormProps) {
       </CardHeader>
 
       <CardContent>
-        <form action={action} className="space-y-6">
+        <form action={execute} className="space-y-6">
           {/* Hidden termId */}
           <input type="hidden" name="termId" value={termId} />
 
@@ -39,8 +42,14 @@ export function SectionForm({ termId, initialData }: SectionFormProps) {
           />
 
           <div className="flex justify-end">
-            <Button type="submit">
-              {initialData ? "Update Section" : "Create Section"}
+            <Button type="submit" disabled={isPending}>
+              {isPending
+                ? initialData
+                  ? "Updating..."
+                  : "Creating..."
+                : initialData
+                  ? "Update Section"
+                  : "Create Section"}
             </Button>
           </div>
         </form>

@@ -1,35 +1,45 @@
 "use server"
 
-import { addInstitute, updateInstitute } from "@/prisma/institute.service"
+import { currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { InstituteType } from "../generated/prisma/enums"
+import { createInstituteWithAdmin, updateInstitute } from "@/prisma/institute.service"
+import { success } from "zod"
 
+/**
+ * Server action to create institute + admin
+ */
 export const createInstitute = async (data: FormData) => {
-    const name = data.get("name") as string
-    const type = data.get("type") as InstituteType
-    const location = data.get("location") as string
-    const establishedYear = data.get("establishedYear") as string
+  const clerkUser = await currentUser()
+  if (!clerkUser || !clerkUser.id) throw new Error("Not authenticated")
 
-    await addInstitute({
-        name,
-        type,
-        location,
-    })
+  const clerkId = clerkUser.id
+  const email = clerkUser.emailAddresses[0]?.emailAddress
+  if (!email) throw new Error("Clerk user does not have an email")
 
-    redirect("/super-admin/institutes")
+  const name = data.get("name") as string
+  const type = data.get("type") as InstituteType
+  const location = data.get("location") as string
+  if (!name || !type || !location) throw new Error("All fields are required")
+
+try {
+  await createInstituteWithAdmin(name, type, location, email, clerkId)
+  return {success: true, message: "Institute created successfully"}
+} catch (error) {
+  return {success: false, message: (error as Error).message}
+}
 }
 
 export const editInstitute = async (id: string, data: FormData) => {
-    const name = data.get("name") as string
-    const type = data.get("type") as InstituteType
-    const location = data.get("location") as string
-    const establishedYear = data.get("establishedYear") as string
+  const name = data.get("name") as string
+  const type = data.get("type") as InstituteType
+  const location = data.get("location") as string
 
-    await updateInstitute(id, {
-        name,
-        type,
-        location,
-    })
+  await updateInstitute(id, {
+    name,
+    type,
+    location,
+  })
 
-    redirect("/super-admin/institutes")
+  redirect("/super-admin/institutes")
 }

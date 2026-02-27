@@ -1,10 +1,28 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
 import TeachersTable from "@/components/teachers-table"
-import { getTeachers } from "@/prisma/teacher.service"
+import { Button } from "@/components/ui/button"
+import prisma from "@/lib/prisma"
+import { getTeachersByInstituteId } from "@/prisma/teacher.service"
+import { currentUser } from "@clerk/nextjs/server"
+import Link from "next/link"
 
 const TeachersPage = async () => {
-  const teachers = await getTeachers()
+   const clerkUser = await currentUser()
+  
+      if (!clerkUser) {
+          return <div>Not authenticated</div>
+      }
+  
+      const dbUser = await prisma.user.findUnique({
+          where: { clerkId: clerkUser.id },
+      })
+  
+      if (!dbUser?.instituteId) {
+          return <div>No institute found</div>
+      }
+  
+      const teachers = await getTeachersByInstituteId(
+          dbUser.instituteId
+      )
 
   return (
     <div className="space-y-6">

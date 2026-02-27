@@ -1,43 +1,43 @@
 "use client"
 
-import { useForm } from "react-hook-form"
 import { createDepartment, updateDepartment } from "@/app/actions/department.actions"
 import { useServerAction } from "@/hook/useServerAction"
 
-interface FormValues {
-  name: string
-}
-
 interface DepartmentFormProps {
+  instituteId: string
   initialData?: {
     id: string
     name: string
   }
 }
 
-export function DepartmentForm({ initialData }: DepartmentFormProps) {
+export function DepartmentForm({ instituteId, initialData }: DepartmentFormProps) {
 
-  const { register, handleSubmit, reset } = useForm<FormValues>({
-    defaultValues: {
-      name: initialData?.name || "",
-    },
-  })
-
-  // Bind ID for update
   const action = initialData
-    ? updateDepartment.bind(null, initialData.id) : createDepartment
+    ? updateDepartment.bind(null, initialData.id)
+    : createDepartment
 
   const { execute, isPending } = useServerAction(action, {
     redirectTo: "/admin/departments",
-    onSuccess: () => reset(),
   })
 
   return (
-    <form onSubmit={handleSubmit(execute)} className="space-y-6">
+    <form action={execute} className="space-y-6">
       <div>
-        <label className="text-sm font-medium">Department Name</label>
+        <label className="text-sm font-medium">
+          Department Name
+        </label>
+        {/* hidden */}
         <input
-          {...register("name", { required: true })}
+          name="instituteId"
+          type="hidden"
+          defaultValue={instituteId}
+          required
+        />
+        <input
+          name="name"
+          defaultValue={initialData?.name}
+          required
           placeholder="e.g. Computer Science"
           className="w-full border p-2 rounded-md"
         />

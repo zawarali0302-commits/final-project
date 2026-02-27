@@ -1,8 +1,15 @@
+"use client"
+
 import { createTerm, updateTerm } from "@/app/actions/term.actions"
-import { getAcademicYears } from "@/prisma/academicYear.service"
+import { useServerAction } from "@/hook/useServerAction"
+import { Button } from "../ui/button"
 
 interface TermFormProps {
   programId: string
+  academicYears: {
+    id: string
+    name: string
+  }[]
   initialData?: {
     id: string
     name: string
@@ -11,12 +18,18 @@ interface TermFormProps {
   }
 }
 
-export default async function TermForm({
+export default function TermForm({
   programId,
+  academicYears,
   initialData,
 }: TermFormProps) {
-  const academicYears = await getAcademicYears()
-  const action = initialData ? updateTerm.bind(null, initialData.id) : createTerm
+  const action = initialData
+    ? updateTerm.bind(null, initialData.id)
+    : createTerm
+
+  const { execute, isPending } = useServerAction(action,{
+    redirectTo: `/admin/programs/${programId}`,
+  })
 
   return (
     <div className="max-w-xl space-y-6">
@@ -24,16 +37,14 @@ export default async function TermForm({
         {initialData ? "Edit Term" : "Add Term"}
       </h1>
 
-      <form action={action} className="space-y-4">
-        {/* Hidden IDs */}
+      <form action={execute} className="space-y-4">
         <input type="hidden" name="programId" value={programId} />
-        {initialData && (
-          <input type="hidden" name="id" value={initialData?.id} />
-        )}
 
-        {/* Academic Year */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Academic Year</label>
+          <label className="text-sm font-medium">
+            Academic Year
+          </label>
+
           <select
             name="academicYearId"
             required
@@ -43,6 +54,7 @@ export default async function TermForm({
             <option value="" disabled>
               Select academic year
             </option>
+
             {academicYears.map((year) => (
               <option key={year.id} value={year.id}>
                 {year.name}
@@ -51,9 +63,11 @@ export default async function TermForm({
           </select>
         </div>
 
-        {/* Term Name */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Term Name</label>
+          <label className="text-sm font-medium">
+            Term Name
+          </label>
+
           <input
             type="text"
             name="name"
@@ -64,12 +78,18 @@ export default async function TermForm({
           />
         </div>
 
-        <button
+        <Button
           type="submit"
-          className="w-full bg-black text-white rounded-md p-2 hover:opacity-90 transition"
+          disabled={isPending}
         >
-          {initialData? "Update Term" : "Create Term"}
-        </button>
+          {isPending
+            ? initialData
+              ? "Updating..."
+              : "Creating..."
+            : initialData
+              ? "Update Term"
+              : "Create Term"}
+        </Button>
       </form>
     </div>
   )

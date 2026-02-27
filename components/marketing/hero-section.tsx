@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { Button } from "../ui/button";
 import StatCard from "./stat-card";
+import { SignedIn } from "@clerk/nextjs";
 
 const stats = [
     {
@@ -35,12 +38,11 @@ const HeroSection = () => {
                     manage official student result cards efficiently.
                 </p>
                 <div className="flex gap-4">
-                    <button className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800">
-                        Register Institution
-                    </button>
-                    <button className="border border-gray-300 px-6 py-3 rounded-xl hover:bg-gray-100">
-                        View Demo
-                    </button>
+                    <SignedIn>
+                        <Button asChild>
+                            <Link href="/register-institute" >Register Your Institute</Link>
+                        </Button>
+                    </SignedIn>
                 </div>
             </div>
 

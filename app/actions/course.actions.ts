@@ -2,7 +2,6 @@
 
 import { addCourse, editCourse, removeCourse } from "@/prisma/course.service"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 export const createCourse = async (data: FormData) => {
 
@@ -15,9 +14,14 @@ export const createCourse = async (data: FormData) => {
         throw new Error("All fields are required")
     }
 
-    await addCourse({ name, code, credits: Number(credits), departmentId })
+    try {
+        await addCourse({ name, code, credits: Number(credits), departmentId })
 
-    redirect(`/admin/departments/${departmentId}`)
+        revalidatePath(`/admin/departments/${departmentId}`)
+        return { success: true, message: "Course created successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to create course" }
+    }
 }
 
 export const updateCourse = async (id: string, data: FormData) => {
@@ -27,12 +31,22 @@ export const updateCourse = async (id: string, data: FormData) => {
     const credits = data.get("credits") as string
     const departmentId = data.get("departmentId") as string
 
-    await editCourse(id, { name, code, credits: Number(credits), departmentId })
-    redirect(`/admin/departments/${departmentId}`)
+    try {
+        await editCourse(id, { name, code, credits: Number(credits), departmentId })
+        revalidatePath(`/admin/departments/${departmentId}`)
+        return { success: true, message: "Course updated successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to update course" }
+    }
 }
 
 
 export const deleteCourse = async (id: string) => {
-    await removeCourse(id)
-    revalidatePath("/")
+    try {
+        await removeCourse(id)
+        revalidatePath("/")
+        return { success: true, message: "Course deleted successfully" }
+    } catch (error) {
+        return { success: false, message: "Failed to delete course" }
+    }
 }
