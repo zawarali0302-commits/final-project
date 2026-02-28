@@ -111,7 +111,7 @@ const CourseDetailPage = async ({ params }: CourseDetailPageProps) => {
 
                                                 <Button asChild className="w-full" disabled={isLocked}>
                                                     <Link
-                                                        href={`/teacher/courses/${sc.courseOffering.course.id}/sections/${sc.section.id}/exams/${exam.id}`}
+                                                        href= {`/teacher/exams/${exam.id}`}
                                                     >
                                                         {isLocked ? "Locked" : "Enter Marks"}
                                                     </Link>

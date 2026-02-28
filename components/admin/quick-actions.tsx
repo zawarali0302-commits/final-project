@@ -23,9 +23,9 @@ const actions = [
         icon: UserPlus,
     },
     {
-        title: "Create Program",
-        description: "Set up a new class",
-        href: "/admin/programs/create",
+        title: "Create Exam",
+        description: "Set up a new exam",
+        href: "/admin/exams/create",
         icon: School,
     },
     {

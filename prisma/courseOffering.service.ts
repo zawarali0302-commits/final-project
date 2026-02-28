@@ -1,5 +1,14 @@
 import prisma from "@/lib/prisma"
 
+export const getCourseOfferingsByInstitute = async (instituteId: string) => {
+  return prisma.courseOffering.findMany({
+    where: { term: { program: { department: { instituteId } } } },
+    include: {
+      course: true,
+      term: true,
+    },
+  })
+}
 
 /**
 * Assign a course to a term (term-level, not yet section-level)
