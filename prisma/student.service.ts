@@ -26,7 +26,7 @@ export const getStudents = async () => {
 };
 
 export const getStudentsByInstitute = async (instituteId: string) => {
-    return await prisma.student.findMany({
+    const students = await prisma.student.findMany({
         where: { instituteId },
         include: {
             program: true,
@@ -47,6 +47,10 @@ export const getStudentsByInstitute = async (instituteId: string) => {
             },
         },
     });
+
+    return students.sort((a, b) =>
+        a.rollNo.localeCompare(b.rollNo, undefined, { numeric: true, sensitivity: "base" })
+    );
 }
 
 export const getStudentById = async (id: string) => {
