@@ -14,11 +14,12 @@ interface EmptyStateProps {
     icon?: React.ReactNode
     title?: string
     description?: string
-    button: string
-    href: string | UrlObject
+    button?: string
+    href?: string | UrlObject
+    action?: React.ReactNode
 }
 
-export function EmptyState({ icon, title, description, button, href }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, button, href, action }: EmptyStateProps) {
     return (
         <Empty>
             <EmptyHeader>
@@ -31,9 +32,13 @@ export function EmptyState({ icon, title, description, button, href }: EmptyStat
                 </EmptyDescription>
             </EmptyHeader>
             <EmptyContent className="flex-row justify-center gap-2">
-                <Button asChild>
-                    <Link href={href}>{button}</Link>
-                </Button>
+                {action ? (
+                    action
+                ) : button && href ? (
+                    <Button asChild>
+                        <Link href={href}>{button}</Link>
+                    </Button>
+                ) : null}
             </EmptyContent>
         </Empty>
     )

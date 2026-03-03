@@ -1,23 +1,76 @@
 "use server"
 
 import prisma from "@/lib/prisma"
+import type { ExamType } from "@/app/generated/prisma/client"
 
 export const addExam = async (
-    title: string,
-    type: any,
+    type: ExamType,
     totalMarks: number,
-    date: Date,
+    date: Date | undefined,
     sectionId: string,
     courseOfferingId: string
 ) => {
+    const sectionCourse = await prisma.sectionCourse.findUnique({
+      where: {
+        courseOfferingId_sectionId: {
+          courseOfferingId,
+          sectionId,
+        },
+      },
+      include: {
+        courseOffering: {
+          include: {
+            term: {
+              select: {
+                programId: true,
+                academicYearId: true,
+              },
+            },
+          },
+        },
+      },
+    })
 
-    await prisma.exam.create({
-      data: {
-        title,
+    if (!sectionCourse) {
+      throw new Error("Selected course is not assigned to the selected section")
+    }
+
+    const { programId, academicYearId } = sectionCourse.courseOffering.term
+
+    const examEvent = await prisma.examEvent.upsert({
+      where: {
+        programId_academicYearId_type: {
+          programId,
+          academicYearId,
+          type,
+        },
+      },
+      update: {},
+      create: {
+        programId,
+        academicYearId,
         type,
+      },
+    })
+
+    const existingCourseExam = await prisma.courseExam.findUnique({
+      where: {
+        examEventId_courseOfferingId: {
+          examEventId: examEvent.id,
+          courseOfferingId,
+        },
+      },
+    })
+
+    if (existingCourseExam) {
+      throw new Error("An exam already exists for this course in the selected exam event")
+    }
+
+    await prisma.courseExam.create({
+      data: {
+        examEventId: examEvent.id,
         totalMarks,
         date,
-        sectionId,
         courseOfferingId,
       },
     })

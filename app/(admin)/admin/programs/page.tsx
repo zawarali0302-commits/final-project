@@ -1,21 +1,15 @@
-import prisma from "@/lib/prisma"
-import { currentUser } from "@clerk/nextjs/server"
 import { getProgramsByInstitute } from "@/prisma/program.service"
+import { getUserByClerkId } from "@/prisma/user.service"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 
 export default async function ProgramsPage() {
-  // 1️⃣ Get Clerk user
-  const clerkUser = await currentUser()
-  if (!clerkUser) return <div>Not authenticated</div>
+  const dbUser = await getUserByClerkId()
 
-  // 2️⃣ Get user in DB
-  const dbUser = await prisma.user.findUnique({
-    where: { clerkId: clerkUser.id },
-  })
-  if (!dbUser?.instituteId) return <div>No institute found</div>
+  if (!dbUser?.instituteId) {
+    return <div>No institute found</div>
+  }
 
-  // 3️⃣ Get all programs in that institute
   const programs = await getProgramsByInstitute(dbUser.instituteId)
   const isEmpty = programs.length === 0
 

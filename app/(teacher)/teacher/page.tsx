@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
-const Page = async () => {
+const TeacherPage = async () => {
   const clerkUser = await currentUser()
 
   if (!clerkUser?.id) {
@@ -89,4 +89,4 @@ function TeacherCard({
   )
 }
 
-export default Page
+export default TeacherPage

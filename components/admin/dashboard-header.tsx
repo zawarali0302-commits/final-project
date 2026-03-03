@@ -1,28 +1,15 @@
 import prisma from "@/lib/prisma"
-import { currentUser } from "@clerk/nextjs/server"
+import { getInstituteById } from "@/prisma/institute.service"
+import { getUserByClerkId } from "@/prisma/user.service"
 
 const DashboardHeader = async () => {
-  // 1️⃣ Get logged-in Clerk user
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    return <div>Not authenticated</div>
-  }
-
-  // 2️⃣ Find user in your DB using clerkId
-  const dbUser = await prisma.user.findUnique({
-    where: { clerkId: clerkUser.id },
-  })
-
+  const dbUser = await getUserByClerkId()
   if (!dbUser?.instituteId) {
     return <div>No institute found</div>
   }
 
   // 3️⃣ Find institute using instituteId
-  const institute = await prisma.institute.findUnique({
-    where: { id: dbUser.instituteId },
-  })
-
+  const institute = await getInstituteById(dbUser.instituteId)
   return (
     <div>
       <h2 className="text-2xl font-bold">

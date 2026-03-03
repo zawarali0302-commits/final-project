@@ -4,7 +4,6 @@ import { currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import { InstituteType } from "../generated/prisma/enums"
 import { createInstituteWithAdmin, updateInstitute } from "@/prisma/institute.service"
-import { success } from "zod"
 
 /**
  * Server action to create institute + admin

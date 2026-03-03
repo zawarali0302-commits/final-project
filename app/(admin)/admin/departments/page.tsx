@@ -1,5 +1,4 @@
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
     Table,
@@ -14,19 +13,11 @@ import { EmptyState } from "@/components/empty-state"
 import Dropdown from "@/components/dropdown"
 import { deleteDepartment } from "@/app/actions/department.actions"
 import { getDepartmentsByInstitute } from "@/prisma/department.service"
-import prisma from "@/lib/prisma"
-import { currentUser } from "@clerk/nextjs/server"
+import { getUserByClerkId } from "@/prisma/user.service"
+import { AddDepartmentDialog } from "@/components/forms/add-department-dialog"
 
 const DepartmentsPage = async () => {
-    const clerkUser = await currentUser()
-
-    if (!clerkUser) {
-        return <div>Not authenticated</div>
-    }
-
-    const dbUser = await prisma.user.findUnique({
-        where: { clerkId: clerkUser.id },
-    })
+    const dbUser = await getUserByClerkId()
 
     if (!dbUser?.instituteId) {
         return <div>No institute found</div>
@@ -48,14 +39,7 @@ const DepartmentsPage = async () => {
                         Manage academic departments in your institution
                     </p>
                 </div>
-                <Button asChild>
-                    <Link href={{
-                        pathname: "/admin/departments/create",
-                        query: { instituteId: dbUser.instituteId },
-                    }}>
-                        Add Department
-                    </Link>
-                </Button>
+                <AddDepartmentDialog instituteId={dbUser.instituteId} />
             </div>
             {/* Empty State */}
             {isEmpty ? (
@@ -63,11 +47,7 @@ const DepartmentsPage = async () => {
                     icon={<Building2 />}
                     title="No departments yet"
                     description="Departments help organize teachers, classes, and subjects."
-                    button="Add department"
-                    href={{
-                        pathname: "/admin/departments/create",
-                        query: { instituteId: dbUser.instituteId },
-                    }}
+                    action={<AddDepartmentDialog instituteId={dbUser.instituteId} triggerLabel="Add Department" />}
                 />
             ) : (
                 <Card>

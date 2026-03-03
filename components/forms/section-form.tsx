@@ -8,26 +8,40 @@ import { useServerAction } from "@/hook/useServerAction"
 
 interface SectionFormProps {
   termId: string
+  redirectTo?: string
+  onSuccess?: () => void
+  showHeading?: boolean
   initialData?: {
     id: string
     name: string
   }
 }
 
-export function SectionForm({ termId, initialData }: SectionFormProps) {
+export function SectionForm({
+  termId,
+  initialData,
+  redirectTo = `/admin/terms/${termId}`,
+  onSuccess,
+  showHeading = true,
+}: SectionFormProps) {
   const action = initialData
     ? updateSection.bind(null, initialData.id)
     : createSection
 
-  const { execute, isPending } = useServerAction(action)
+  const { execute, isPending } = useServerAction(action, {
+    redirectTo,
+    onSuccess,
+  })
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>
-          {initialData ? "Edit Section" : "Add Section"}
-        </CardTitle>
-      </CardHeader>
+      {showHeading ? (
+        <CardHeader>
+          <CardTitle>
+            {initialData ? "Edit Section" : "Add Section"}
+          </CardTitle>
+        </CardHeader>
+      ) : null}
 
       <CardContent>
         <form action={execute} className="space-y-6">

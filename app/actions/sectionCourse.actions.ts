@@ -2,7 +2,6 @@
 
 import { addCourseToSection, addSectionCourseTeacher, removeCourseFromSection } from "@/prisma/sectionCourse.service"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 export const assignCourseToSection = async (data: FormData) => {
   const sectionId = data.get("sectionId") as string
@@ -14,7 +13,7 @@ export const assignCourseToSection = async (data: FormData) => {
 
   try {
     await addCourseToSection(sectionId, courseOfferingId)
-    revalidatePath(`/admin/sections/${sectionId}`)
+    revalidatePath("/")
     return {success: true, message: "Course assigned to section successfully"}
   } catch (error) {
     return {success: false, message: "Failed to assign course to section"}
@@ -37,7 +36,7 @@ export const unassignCourseFromSection = async (data: FormData) => {
     await removeCourseFromSection(sectionCourseId, sectionId)
 
     // ✅ Revalidate ONLY this section page
-    revalidatePath(`/admin/sections/${sectionId}`)
+    revalidatePath("/")
 
     return {
       success: true,
@@ -53,17 +52,27 @@ export const unassignCourseFromSection = async (data: FormData) => {
   }
 }
 
-export const updateSectionCourseTeacher = async (formData: FormData) => {
-  const sectionCourseId = formData.get("sectionCourseId") as string
-  const teacherId = formData.get("teacherId") as string | null
+export const updateSectionCourseTeacher = async (data: FormData) => {
+  const sectionCourseId = data.get("sectionCourseId") as string
+  const teacherIdRaw = data.get("teacherId") as string | null
+  const sectionId = data.get("sectionId") as string | null
 
-  if (!sectionCourseId || !teacherId) {
-    throw new Error("Missing sectionCourseId or teacherId")
+  if (!sectionCourseId) {
+    throw new Error("Missing sectionCourseId")
   }
+
+  // allow empty teacherId to mean unassign (null)
+  const teacherId = teacherIdRaw && teacherIdRaw !== "" ? teacherIdRaw : null
 
   try {
     await addSectionCourseTeacher(sectionCourseId, teacherId)
-    revalidatePath("/")
+
+    // Revalidate only the affected section page if we have sectionId, otherwise fall back to root
+    if (sectionId) {
+      revalidatePath(`/admin/sections/${sectionId}`)
+    } else {
+      revalidatePath("/")
+    }
     return {success: true, message: "Teacher assigned successfully"}
   } catch (error) {
     return {success: false, message: "Failed to assign teacher"}

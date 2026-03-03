@@ -1,37 +1,49 @@
 import { UserRole } from '@/app/generated/prisma/enums'
 import prisma from '@/lib/prisma'
 import { currentUser } from '@clerk/nextjs/server'
-import { Button } from './ui/button'
 import Link from 'next/link'
+import { Button } from './ui/button'
+
+const getMetadataRole = (role: unknown): UserRole | undefined => {
+    const value = String(role ?? '').trim().toLowerCase().replace(/[_\s]/g, '-')
+    if (value === 'super-admin' || value === 'superadmin') return UserRole.SUPER_ADMIN
+    if (value === 'admin') return UserRole.ADMIN
+    if (value === 'teacher') return UserRole.TEACHER
+    return undefined
+}
 
 const DashboardButton = async () => {
     const clerkUser = await currentUser()
-    if (!clerkUser?.id) return null // or show generic header
+    if (!clerkUser) {
+        return null
+    }
 
-    // fetch user from DB by clerkId
-    const dbUser = await prisma.user.findUnique({
-        where: { email: clerkUser.emailAddresses[0].emailAddress },
-    })
+    const email = clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress
 
-    const clerkRole = clerkUser.publicMetadata?.role as string | undefined
+    const metadataRole = getMetadataRole(clerkUser.publicMetadata?.role)
 
-    const role = dbUser?.role || (clerkRole === "super-admin" ? UserRole.SUPER_ADMIN : undefined)
+    const dbUser = email
+        ? await prisma.user.findUnique({
+            where: { email },
+        })
+        : null
+
+    // Super admin can be metadata-only without DB row.
+    const role = dbUser?.role ?? metadataRole
 
     const dashboardHref =
         role === UserRole.ADMIN
-            ? "/admin"
+            ? '/admin'
             : role === UserRole.TEACHER
-                ? "/teacher"
+                ? '/teacher'
                 : role === UserRole.SUPER_ADMIN
-                    ? "/super-admin"
-                    : "/"
+                    ? '/super-admin'
+                    : '/'
+
     return (
         <Button asChild>
-            <Link href={dashboardHref}>
-                Dashboard
-            </Link>
+            <Link href={dashboardHref}>Dashboard</Link>
         </Button>
-
     )
 }
 

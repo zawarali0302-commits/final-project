@@ -1,8 +1,5 @@
 import { CourseForm } from "@/components/forms/course-form"
-import prisma from "@/lib/prisma"
 import { getCourseById } from "@/prisma/course.service"
-import { getDepartmentById, getDepartments } from "@/prisma/department.service"
-import { notFound, redirect } from "next/navigation"
 
 interface EditCoursePageProps {
   params: Promise<{ id: string }>

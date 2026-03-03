@@ -13,7 +13,7 @@ export const createProgram = async (data: FormData) => {
     try {
         await addProgram(name, level, system, departmentId)
 
-        revalidatePath(`/admin/departments/${departmentId}`)
+        revalidatePath("/")
         return { success: true, message: "Program created successfully" }
     } catch (error) {
         return { success: false, message: "Failed to create program" }

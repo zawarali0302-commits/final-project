@@ -1,82 +1,131 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import { createExam } from "@/app/actions/exam.actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useServerAction } from "@/hook/useServerAction"
 
-interface Props {
-    sections: any[]
-    courseOfferings: any[]
+interface SectionCourseOption {
+  courseOfferingId: string
+  courseName: string
+  courseCode: string
 }
 
-const CreateExamForm = ({ sections, courseOfferings }: Props) => {
-    const { execute, isPending } = useServerAction(createExam)
+interface SectionOption {
+  id: string
+  name: string
+  term: {
+    name: string
+    program: {
+      name: string
+    }
+    academicYear: {
+      name: string
+    }
+  }
+  sectionCourses: SectionCourseOption[]
+}
 
-    return (
-        <div className="max-w-xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Create Exam</h1>
+interface Props {
+  sections: SectionOption[]
+}
 
-            <form action={execute} className="space-y-4">
+const CreateExamForm = ({ sections }: Props) => {
+  const { execute, isPending } = useServerAction(createExam)
+  const [sectionId, setSectionId] = useState("")
+  const [courseOfferingId, setCourseOfferingId] = useState("")
 
-                <div>
-                    <label>Section</label>
-                    <select name="sectionId" className="w-full border p-2 rounded" required>
-                        <option value="">Select Section</option>
-                        {sections.map((section) => (
-                            <option key={section.id} value={section.id}>
-                                {section.term.program.name} –
-                                {section.term.academicYear.name} –
-                                {section.term.name} –
-                                Section {section.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+  const selectedSection = useMemo(
+    () => sections.find((section) => section.id === sectionId),
+    [sections, sectionId]
+  )
 
-                <div>
-                    <label>Course</label>
-                    <select name="courseOfferingId" className="w-full border p-2 rounded" required>
-                        <option value="">Select Course</option>
-                        {courseOfferings.map((offering) => (
-                            <option key={offering.id} value={offering.id}>
-                                {offering.course.name} ({offering.term.name})
-                            </option>
-                        ))}
-                    </select>
-                </div>
+  const sectionCourses = selectedSection?.sectionCourses ?? []
+  const canSubmit = Boolean(sectionId && courseOfferingId)
 
-                <div>
-                    <label>Title</label>
-                    <Input name="title" required />
-                </div>
+  return (
+    <div className="max-w-xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">Create Exam</h1>
 
-                <div>
-                    <label>Type</label>
-                    <select name="type" className="w-full border p-2 rounded">
-                        <option value="MID">Mid</option>
-                        <option value="FINAL">Final</option>
-                        <option value="QUIZ">Quiz</option>
-                        <option value="ASSIGNMENT">Assignment</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label>Date</label>
-                    <Input type="date" name="date" required />
-                </div>
-
-                <div>
-                    <label>Total Marks</label>
-                    <Input type="number" name="totalMarks" required />
-                </div>
-
-                <Button type="submit" className="w-full">
-                    {isPending ? "Creating..." : "Create"}
-                </Button>
-            </form>
+      <form action={execute} className="space-y-4">
+        <div>
+          <Label htmlFor="sectionId">Section</Label>
+          <select
+            id="sectionId"
+            name="sectionId"
+            className="w-full border p-2 rounded"
+            required
+            value={sectionId}
+            onChange={(e) => {
+              setSectionId(e.target.value)
+              setCourseOfferingId("")
+            }}
+          >
+            <option value="">Select Section</option>
+            {sections.map((section) => (
+              <option key={section.id} value={section.id}>
+                {section.term.program.name} - {section.term.academicYear.name} - {section.term.name} - Section {section.name}
+              </option>
+            ))}
+          </select>
         </div>
-    )
+
+        <div>
+          <Label htmlFor="courseOfferingId">Course In Selected Section</Label>
+          <select
+            id="courseOfferingId"
+            name="courseOfferingId"
+            className="w-full border p-2 rounded"
+            required
+            value={courseOfferingId}
+            onChange={(e) => setCourseOfferingId(e.target.value)}
+            disabled={!selectedSection || sectionCourses.length === 0}
+          >
+            <option value="">Select Course</option>
+            {sectionCourses.map((offering) => (
+              <option key={offering.courseOfferingId} value={offering.courseOfferingId}>
+                {offering.courseName} ({offering.courseCode})
+              </option>
+            ))}
+          </select>
+          {selectedSection && sectionCourses.length === 0 ? (
+            <p className="text-sm text-muted-foreground mt-1">
+              This section has no assigned courses yet. Assign courses first.
+            </p>
+          ) : null}
+        </div>
+
+        <div>
+          <Label htmlFor="type">Type</Label>
+          <select id="type" name="type" className="w-full border p-2 rounded" required>
+            <option value="MID">Mid</option>
+            <option value="FINAL">Final</option>
+            <option value="QUIZ">Quiz</option>
+            <option value="ASSIGNMENT">Assignment</option>
+          </select>
+        </div>
+
+        <div>
+          <Label htmlFor="date">Exam Date</Label>
+          <Input id="date" type="date" name="date" />
+          <p className="text-xs text-muted-foreground mt-1">
+            Optional. Leave empty to create without a scheduled date.
+          </p>
+        </div>
+
+        <div>
+          <Label htmlFor="totalMarks">Total Marks</Label>
+          <Input id="totalMarks" type="number" name="totalMarks" min={1} required />
+        </div>
+
+        <Button type="submit" className="w-full" disabled={isPending || !canSubmit}>
+          {isPending ? "Creating..." : "Create"}
+        </Button>
+      </form>
+    </div>
+  )
 }
 
 export default CreateExamForm

@@ -21,7 +21,7 @@ export const createTerm = async (data: FormData) => {
     try {
         await addTerm(name, programId, academicYearId)
 
-        revalidatePath(`/admin/programs/${programId}?departmentId=${program?.departmentId}`)
+        revalidatePath("/")
         return { success: true, message: "Term created successfully" }
     } catch (error) {
         return { success: false, message: "Failed to create term" }

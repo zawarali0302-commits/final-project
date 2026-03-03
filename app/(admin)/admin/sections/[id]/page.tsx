@@ -1,16 +1,17 @@
 import { StatCard } from "@/components/admin/stat-card"
+import AssignSectionCourseDialog from "@/components/forms/assign-section-course-dialog"
 import AssignTeachersToSectionCoursesForm from "@/components/forms/assign-teacher-course-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import UnassignSectionCourseForm from "@/components/forms/unassign-section-course-form"
+import { getTermCourses } from "@/prisma/courseOffering.service"
 import { getSectionById } from "@/prisma/section.service"
 import { GraduationCap, LibraryBig, Users } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import prisma from "@/lib/prisma"
-import { currentUser } from "@clerk/nextjs/server"
 import { getTeachersByInstituteId } from "@/prisma/teacher.service"
+import { getUserByClerkId } from "@/prisma/user.service"
 
 interface SectionDetailPageProps {
     params: Promise<{ id: string }>
@@ -22,24 +23,17 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
 
     if (!section) return notFound()
 
-    const clerkUser = await currentUser()
+    const user = await getUserByClerkId()
 
-    if (!clerkUser) {
-        return <div>Not authenticated</div>
+    if (!user?.instituteId) {
+        throw new Error("User is not associated with any institute")
     }
-
-    const dbUser = await prisma.user.findUnique({
-        where: { clerkId: clerkUser.id },
-    })
-
-    if (!dbUser?.instituteId) {
-        return <div>No institute found</div>
-    }
-
     const teachers = await getTeachersByInstituteId(
-        dbUser.instituteId
+        user?.instituteId
     )
+
     const students = section.studentEnrollments.map((se) => se.student)
+    const termCourses = await getTermCourses(section.termId)
 
     return (
         <div className="space-y-8 max-w-6xl">
@@ -66,21 +60,17 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                <StatCard title="Students" value={students.length} icon={<Users className="h-5 w-5 text-muted-foreground" />} />
-                <StatCard title="Courses" value={section.sectionCourses.length} icon={<LibraryBig className="h-5 w-5 text-muted-foreground" />} />
-                <StatCard title="Teachers" value={section.sectionCourses.length} icon={<GraduationCap className="h-5 w-5 text-muted-foreground" />} />
-            </div>
+                    <div className="grid grid-cols-3 gap-4">
+                        <StatCard title="Students" value={students.length} icon={<Users className="h-5 w-5 text-muted-foreground" />} />
+                        <StatCard title="Courses" value={section.sectionCourses.length} icon={<LibraryBig className="h-5 w-5 text-muted-foreground" />} />
+                        <StatCard title="Teachers" value={Array.from(new Set(section.sectionCourses.map(sc => sc.teacherId).filter(Boolean))).length} icon={<GraduationCap className="h-5 w-5 text-muted-foreground" />} />
+                    </div>
 
             {/* Courses */}
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Courses</CardTitle>
-                    <Button asChild>
-                        <Link href={`/admin/sections/${id}/assign`}>
-                            Assign Courses
-                        </Link>
-                    </Button>
+                    <AssignSectionCourseDialog sectionId={id} termCourses={termCourses} />
                 </CardHeader>
 
                 <CardContent>
@@ -100,21 +90,28 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
                             </TableHeader>
 
                             <TableBody>
-                                {section.sectionCourses.map((sc) => (
-                                    <TableRow key={sc.id}>
-                                        <TableCell>{sc.courseOffering.course.name}</TableCell>
-                                        <TableCell>{sc.courseOffering.course.code}</TableCell>
-                                        <TableCell>
-                                            {sc.courseOffering.course.credits ?? "-"}
-                                        </TableCell>
-                                        <TableCell>
-                                            <UnassignSectionCourseForm
-                                                sectionId={id}
-                                                sectionCourseId={sc.id}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {section.sectionCourses
+                                    .slice()
+                                    .sort((a, b) =>
+                                        (a.courseOffering.course.name || "").localeCompare(
+                                            b.courseOffering.course.name || ""
+                                        )
+                                    )
+                                    .map((sc) => (
+                                        <TableRow key={sc.id}>
+                                            <TableCell>{sc.courseOffering.course.name}</TableCell>
+                                            <TableCell>{sc.courseOffering.course.code}</TableCell>
+                                            <TableCell>
+                                                {sc.courseOffering.course.credits ?? "-"}
+                                            </TableCell>
+                                            <TableCell>
+                                                <UnassignSectionCourseForm
+                                                    sectionId={id}
+                                                    sectionCourseId={sc.id}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                             </TableBody>
                         </Table>
                     )}

@@ -3,13 +3,11 @@
 import { addSection, editSection, removeSection } from "@/prisma/section.service"
 import { getTermById } from "@/prisma/term.service"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 
 export const createSection = async (data: FormData) => {
   const name = data.get("name") as string
   const termId = data.get("termId") as string
-  const programId = data.get("programId") as string
 
 
   if (!name) {
@@ -27,7 +25,7 @@ export const createSection = async (data: FormData) => {
       termId
     )
 
-    revalidatePath(`/admin/terms/${termId}?programId=${term?.programId}`)
+    revalidatePath("/")
     return { success: true, message: "Section created successfully" }
   } catch (error) {
     return { success: false, message: "Failed to create section" }

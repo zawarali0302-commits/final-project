@@ -1,19 +1,31 @@
 "use server"
 
 import { addExam } from "@/prisma/exam.service"
+import type { ExamType } from "@/app/generated/prisma/client"
 import { revalidatePath } from "next/cache"
 
 export const createExam = async (data: FormData) => {
-  const title = data.get("title") as string
-  const type = data.get("type") as any
+  const type = data.get("type") as ExamType
   const totalMarks = Number(data.get("totalMarks"))
-  const date = new Date(data.get("date") as string)
+  const rawDate = data.get("date") as string
+  const date = rawDate ? new Date(rawDate) : undefined
   const sectionId = data.get("sectionId") as string
   const courseOfferingId = data.get("courseOfferingId") as string
 
+  if (!type || !sectionId || !courseOfferingId) {
+    return { success: false, message: "Please fill all required fields" }
+  }
+
+  if (Number.isNaN(totalMarks) || totalMarks <= 0) {
+    return { success: false, message: "Total marks must be greater than 0" }
+  }
+
+  if (date && Number.isNaN(date.getTime())) {
+    return { success: false, message: "Please provide a valid exam date" }
+  }
+
   try {
     await addExam(
-      title,
       type,
       totalMarks,
       date,
@@ -24,6 +36,9 @@ export const createExam = async (data: FormData) => {
     revalidatePath(`/admin/sections/${sectionId}`)
     return { success: true, message: "Exam created successfully" }
   } catch (error) {
-    return { success: false, message: "Failed to create exam" }
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to create exam",
+    }
   }
 }

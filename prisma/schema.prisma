@@ -120,7 +120,8 @@ model AcademicYear {
   instituteId String
   institute   Institute @relation(fields: [instituteId], references: [id], onDelete: Cascade)
 
-  terms Term[]
+  terms      Term[]
+  examEvents ExamEvent[]
 
   @@unique([name, instituteId])
 }
@@ -152,9 +153,10 @@ model Program {
   departmentId String
   department   Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
 
-  terms    Term[]
-  students Student[]
-  sessions Session[]
+  terms      Term[]
+  students   Student[]
+  sessions   Session[]
+  examEvents ExamEvent[]
 
   @@unique([name, departmentId])
 }
@@ -203,7 +205,6 @@ model Section {
   term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
 
   studentEnrollments StudentEnrollment[]
-  exams              Exam[]
   sectionCourses     SectionCourse[]
 
   @@unique([name, termId])
@@ -233,7 +234,7 @@ model CourseOffering {
   term   Term   @relation(fields: [termId], references: [id], onDelete: Cascade)
 
   studentEnrollments StudentEnrollment[]
-  exams              Exam[]
+  courseExams        CourseExam[]
   sectionCourses     SectionCourse[]
 
   @@unique([courseId, termId])
@@ -284,6 +285,8 @@ model Student {
   program   Program   @relation(fields: [programId], references: [id], onDelete: Cascade)
 
   studentEnrollments StudentEnrollment[]
+  studentMarks       StudentMark[]
+  results            Result[]
 
   @@unique([rollNo, instituteId])
 }
@@ -320,29 +323,68 @@ model Attendance {
 
 // --- Exams & Results ---
 
-model Exam {
-  id               String         @id @default(cuid())
-  type             ExamType
-  title            String
-  date             DateTime
-  totalMarks       Float
-  sectionId        String
-  courseOfferingId String
-  section          Section        @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  courseOffering   CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+model ExamEvent {
+  id             String   @id @default(uuid())
+  programId      String
+  academicYearId String
+  type           ExamType
+  isLocked       Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
-  results Result[]
+  program      Program      @relation(fields: [programId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  courseExams CourseExam[]
+  results     Result[]
+
+  @@unique([programId, academicYearId, type])
+}
+
+model CourseExam {
+  id               String    @id @default(uuid())
+  examEventId      String
+  courseOfferingId String
+  date             DateTime?
+  totalMarks       Int
+  createdAt        DateTime  @default(now())
+
+  examEvent      ExamEvent      @relation(fields: [examEventId], references: [id], onDelete: Cascade)
+  courseOffering CourseOffering @relation(fields: [courseOfferingId], references: [id], onDelete: Cascade)
+
+  studentMarks StudentMark[]
+
+  @@unique([examEventId, courseOfferingId])
+}
+
+model StudentMark {
+  id            String   @id @default(uuid())
+  studentId     String
+  courseExamId  String
+  obtainedMarks Float
+  createdAt     DateTime @default(now())
+
+  student    Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  courseExam CourseExam @relation(fields: [courseExamId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseExamId])
 }
 
 model Result {
-  id           String            @id @default(cuid())
-  marks        Float
-  grade        String?
-  remarks      String?
-  enrollmentId String
-  examId       String
-  enrollment   StudentEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  exam         Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  studentId     String
+  examEventId   String
+  totalMarks    Float
+  obtainedMarks Float
+  percentage    Float
+  gpa           Float
+  grade         String
+  isPublished   Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
-  @@unique([enrollmentId, examId])
+  student             Student            @relation(fields: [studentId], references: [id])
+  examEvent           ExamEvent          @relation(fields: [examEventId], references: [id])
+  studentEnrollment   StudentEnrollment? @relation(fields: [studentEnrollmentId], references: [id])
+  studentEnrollmentId String?
+
+  @@unique([studentId, examEventId])
 }

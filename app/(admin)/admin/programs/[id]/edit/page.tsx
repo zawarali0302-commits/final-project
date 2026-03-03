@@ -1,4 +1,3 @@
-import { getDepartments } from "@/prisma/department.service"
 import { getProgramById } from "@/prisma/program.service"
 import { ProgramForm } from "@/components/forms/program-form"
 

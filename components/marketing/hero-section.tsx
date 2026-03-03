@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
 import StatCard from "./stat-card";
-import { SignedIn } from "@clerk/nextjs";
+import { currentUser } from "@clerk/nextjs/server";
+import prisma from "@/lib/prisma";
+import { UserRole } from "@/app/generated/prisma/enums";
 
 const stats = [
     {
@@ -25,7 +27,27 @@ const stats = [
         label: "Availability",
     }
 ]
-const HeroSection = () => {
+
+const HeroSection = async () => {
+    const clerkUser = await currentUser()
+    let showRegisterInstitute = false
+
+    if (clerkUser) {
+        const email = clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress
+
+        if (email) {
+            const dbUser = await prisma.user.findUnique({
+                where: { email },
+                select: {
+                    role: true,
+                    instituteId: true,
+                },
+            })
+
+            showRegisterInstitute = !(dbUser?.role === UserRole.ADMIN && Boolean(dbUser.instituteId))
+        }
+    }
+
     return (
         <section className="max-w-7xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
@@ -38,11 +60,11 @@ const HeroSection = () => {
                     manage official student result cards efficiently.
                 </p>
                 <div className="flex gap-4">
-                    <SignedIn>
+                    {showRegisterInstitute && (
                         <Button asChild>
-                            <Link href="/register-institute" >Register Your Institute</Link>
+                            <Link href="/register-institute">Register Your Institute</Link>
                         </Button>
-                    </SignedIn>
+                    )}
                 </div>
             </div>
 

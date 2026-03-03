@@ -12,6 +12,9 @@ interface TeacherFormProps {
     name: string
   }[]
   instituteId: string
+  redirectTo?: string
+  onSuccess?: () => void
+  defaultDepartmentId?: string
   initialData?: {
     id: string
     name: string
@@ -24,6 +27,9 @@ interface TeacherFormProps {
 export default function TeacherForm({
   departments,
   instituteId,
+  redirectTo,
+  onSuccess,
+  defaultDepartmentId,
   initialData,
 }: TeacherFormProps) {
 
@@ -31,7 +37,10 @@ export default function TeacherForm({
     ? updateTeacher.bind(null, initialData.id)
     : createTeacher
 
-  const { execute, isPending } = useServerAction(action)
+  const { execute, isPending } = useServerAction(action, {
+    redirectTo,
+    onSuccess,
+  })
 
   return (
     <form action={execute} className="space-y-4">
@@ -67,7 +76,7 @@ export default function TeacherForm({
           name="departmentId"
           className="w-full border rounded-md p-2"
           required
-          defaultValue={initialData?.departmentId ?? ""}
+          defaultValue={initialData?.departmentId ?? defaultDepartmentId ?? ""}
         >
           <option value="">Select Department</option>
           {departments.map((dept) => (

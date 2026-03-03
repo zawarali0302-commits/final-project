@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { createStudent, updateStudent } from "@/app/actions/student.actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,16 +12,45 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { useServerAction } from "@/hook/useServerAction"
 import { StudentStatus } from "@/app/generated/prisma/enums"
+import SessionForm from "@/components/forms/session-form"
 
 interface StudentFormProps {
   instituteId: string | undefined
-  departments: any[]
-  programs: any[]
-  sessions: any[]
-  terms: any[]
-  sections: any[]
+  redirectTo?: string
+  onSuccess?: () => void
+  departments: Array<{
+    id: string
+    name: string
+  }>
+  programs: Array<{
+    id: string
+    name: string
+  }>
+  sessions: Array<{
+    id: string
+    name: string
+    programId: string
+  }>
+  terms: Array<{
+    id: string
+    name: string
+    programId: string
+  }>
+  sections: Array<{
+    id: string
+    name: string
+    termId: string
+  }>
   initialData?: {
     id: string
     name: string
@@ -34,72 +64,64 @@ interface StudentFormProps {
   }
 }
 
-export default function StudentForm({
-  instituteId,
-  departments,
-  programs,
-  sessions,
-  terms,
-  sections,
-  initialData,
-}: StudentFormProps) {
-  // ✅ Controlled cascading state
+export default function StudentForm(props: StudentFormProps) {
+  const {
+    instituteId,
+    programs,
+    sessions,
+    terms,
+    sections,
+    initialData,
+    redirectTo,
+    onSuccess,
+  } = props
+  const router = useRouter()
+  const [isSessionDialogOpen, setIsSessionDialogOpen] = useState(false)
+
   const [selectedProgram, setSelectedProgram] = useState(
     initialData?.programId ?? ""
   )
-
   const [selectedSession, setSelectedSession] = useState(
     initialData?.sessionId ?? ""
   )
-
   const [selectedTerm, setSelectedTerm] = useState(
     initialData
       ? sections.find((s) => s.id === initialData.sectionId)?.termId ?? ""
       : ""
   )
-
   const [selectedSection, setSelectedSection] = useState(
     initialData?.sectionId ?? ""
   )
 
-  // 🔎 Filters
   const filteredSessions = sessions.filter(
     (s) => s.programId === selectedProgram
   )
-
-  const filteredTerms = terms.filter(
-    (t) => t.programId === selectedProgram
-  )
-
-  const filteredSections = sections.filter(
-    (s) => s.termId === selectedTerm
-  )
+  const filteredTerms = terms.filter((t) => t.programId === selectedProgram)
+  const filteredSections = sections.filter((s) => s.termId === selectedTerm)
 
   const actionToUse = initialData
-    ? updateStudent.bind(null, initialData!.id)
+    ? updateStudent.bind(null, initialData.id)
     : createStudent
 
-  const { execute, isPending } = useServerAction(actionToUse)
+  const { execute, isPending } = useServerAction(actionToUse, {
+    redirectTo,
+    onSuccess,
+  })
 
   return (
     <form action={execute} className="space-y-6">
-
-      {/* Hidden Institute */}
       <input type="hidden" name="instituteId" value={instituteId} />
 
-      {/* Name */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Full Name</label>
         <Input name="name" defaultValue={initialData?.name} required />
       </div>
 
-      {/* Roll Number */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Roll Number</label>
         <Input name="rollNo" defaultValue={initialData?.rollNo} required />
       </div>
 
-      {/* Gender */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Gender</label>
         <Select name="gender" defaultValue={initialData?.gender} required>
@@ -114,13 +136,12 @@ export default function StudentForm({
         </Select>
       </div>
 
-      {/* Status */}
-      {initialData &&
+      {initialData ? (
         <div className="space-y-2">
           <label className="text-sm font-medium">Status</label>
           <Select
             name="status"
-            defaultValue={initialData?.status ?? "ACTIVE"}
+            defaultValue={initialData.status ?? "ACTIVE"}
             required
           >
             <SelectTrigger>
@@ -131,13 +152,11 @@ export default function StudentForm({
               <SelectItem value={StudentStatus.GRADUATED}>Graduated</SelectItem>
               <SelectItem value={StudentStatus.SUSPENDED}>Suspended</SelectItem>
               <SelectItem value={StudentStatus.WITHDRAWN}>Withdrawn</SelectItem>
-
             </SelectContent>
           </Select>
         </div>
+      ) : null}
 
-      }
-      {/* Program */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Program</label>
         <Select
@@ -164,17 +183,43 @@ export default function StudentForm({
         </Select>
       </div>
 
-      {/* Session */}
       <div className="space-y-2">
-        <label className="text-sm font-medium flex justify-between">
+        <label className="flex justify-between text-sm font-medium">
           <span>Session</span>
-
-          <a
-            href={`/admin/sessions/create?programId=${selectedProgram}`}
-            className="text-sm text-blue-600"
-          >
-            + Add Session
-          </a>
+          <Dialog open={isSessionDialogOpen} onOpenChange={setIsSessionDialogOpen}>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="text-sm text-blue-600 disabled:text-muted-foreground"
+                disabled={!selectedProgram || !instituteId}
+              >
+                + Add Session
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-xl">
+              <DialogHeader>
+                <DialogTitle>Create Session</DialogTitle>
+                <DialogDescription>
+                  Add a new session for the selected program without leaving this page.
+                </DialogDescription>
+              </DialogHeader>
+              {instituteId ? (
+                <SessionForm
+                  instituteId={instituteId}
+                  programs={programs}
+                  defaultProgramId={selectedProgram}
+                  onSuccess={() => {
+                    setIsSessionDialogOpen(false)
+                    router.refresh()
+                  }}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Institute is required to create a session.
+                </p>
+              )}
+            </DialogContent>
+          </Dialog>
         </label>
 
         <Select
@@ -197,7 +242,6 @@ export default function StudentForm({
         </Select>
       </div>
 
-      {/* Term */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Term</label>
         <Select
@@ -221,7 +265,6 @@ export default function StudentForm({
         </Select>
       </div>
 
-      {/* Section */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Section</label>
         <Select

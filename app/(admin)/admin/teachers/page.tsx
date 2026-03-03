@@ -1,28 +1,20 @@
 import TeachersTable from "@/components/teachers-table"
-import { Button } from "@/components/ui/button"
-import prisma from "@/lib/prisma"
+import { AddTeacherDialog } from "@/components/forms/add-teacher-dialog"
+import { getDepartmentsByInstitute } from "@/prisma/department.service"
 import { getTeachersByInstituteId } from "@/prisma/teacher.service"
-import { currentUser } from "@clerk/nextjs/server"
-import Link from "next/link"
+import { getUserByClerkId } from "@/prisma/user.service"
 
 const TeachersPage = async () => {
-   const clerkUser = await currentUser()
-  
-      if (!clerkUser) {
-          return <div>Not authenticated</div>
-      }
-  
-      const dbUser = await prisma.user.findUnique({
-          where: { clerkId: clerkUser.id },
-      })
-  
-      if (!dbUser?.instituteId) {
-          return <div>No institute found</div>
-      }
+   const dbUser = await getUserByClerkId()
+   
+     if (!dbUser?.instituteId) {
+       return <div>No institute found</div>
+     }
   
       const teachers = await getTeachersByInstituteId(
           dbUser.instituteId
       )
+      const departments = await getDepartmentsByInstitute(dbUser.instituteId)
 
   return (
     <div className="space-y-6">
@@ -34,9 +26,7 @@ const TeachersPage = async () => {
           </p>
         </div>
 
-        <Link href="/admin/teachers/create">
-          <Button>Add Teacher</Button>
-        </Link>
+        <AddTeacherDialog instituteId={dbUser.instituteId} departments={departments} />
       </div>
 
       <TeachersTable teachers={teachers} />

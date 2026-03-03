@@ -17,6 +17,22 @@ export const getTeachersByInstituteId = async (instituteId: string) => {
   })
 }
 
+export const getTeacherByDepartmentId = async (departmentId: string) => {
+  return prisma.teacher.findMany({
+    where: {
+      departmentId,
+    },
+    include: {
+      department: true,
+      _count: {
+        select: {
+          sectionCourses: true,
+        },
+      },
+    },
+  })
+}
+  
 export const getTeacherById = async (id: string) => {
   return prisma.teacher.findUnique({
     where: {
@@ -27,6 +43,7 @@ export const getTeacherById = async (id: string) => {
     },
   })
 }
+
 
 export async function addTeacher(
   name: string,

@@ -15,8 +15,12 @@ import { createSession, updateSession } from "@/app/actions/session.actions"
 
 interface SessionFormProps {
   instituteId: string
-  programs: any[]
+  programs: Array<{
+    id: string
+    name: string
+  }>
   defaultProgramId?: string | null
+  onSuccess?: () => void
   initialData?: {
     id: string
     name: string
@@ -30,6 +34,7 @@ export default function SessionForm({
   instituteId,
   programs,
   defaultProgramId,
+  onSuccess,
   initialData,
 }: SessionFormProps) {
 
@@ -43,7 +48,9 @@ export default function SessionForm({
     ? updateSession.bind(null, initialData!.id)
     : createSession
 
-  const { execute, isPending } = useServerAction(action)
+  const { execute, isPending } = useServerAction(action, {
+    onSuccess,
+  })
 
   return (
     <form action={execute} className="space-y-6 max-w-xl">

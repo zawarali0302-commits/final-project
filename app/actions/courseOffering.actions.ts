@@ -9,7 +9,7 @@ export const assignCourseToTerm = async (data: FormData) => {
 
     try {
         await addCourseToTerm(courseId, termId)
-        revalidatePath(`/admin/terms/${termId}`)
+        revalidatePath("/")
         return { success: true, message: "Course assigned to term successfully" }
     } catch (error) {
         return { success: false, message: "Failed to assign course to term" }

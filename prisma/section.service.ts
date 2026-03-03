@@ -25,7 +25,11 @@ export async function getSections() {
           teacher: true,
           courseOffering: {
             include: {
-              course: true,
+              course: {
+                include: {
+                  department: true,
+                },
+              },
             },
           }
         },
@@ -60,7 +64,11 @@ export async function getSectionsByInstitute(instituteId: string) {
           teacher: true,
           courseOffering: {
             include: {
-              course: true,
+              course: {
+                include: {
+                  department: true,
+                },
+              },
             },
           }
         },
@@ -94,7 +102,11 @@ export async function getSectionById(id: string) {
           teacher: true,
           courseOffering: {
             include: {
-              course: true,
+                course: {
+                  include: {
+                    department: true,
+                  },
+                },
             },
           }
         },
@@ -165,7 +177,6 @@ export async function editSection(
 export async function removeSection(id: string) {
   const section = await prisma.section.findUnique({ where: { id } })
   if (!section) throw new Error("Section not found")
-  if (section.name === "Default") throw new Error("Default section cannot be deleted")
 
   return prisma.section.delete({ where: { id } })
 }

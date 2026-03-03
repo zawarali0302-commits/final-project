@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 
 interface AcademicYearFormProps {
   instituteId: string | undefined
+  onSuccess?: () => void
   initialData?: {
     id: string
     name: string
@@ -16,6 +17,7 @@ interface AcademicYearFormProps {
 
 export default function AcademicYearForm({
   instituteId,
+  onSuccess,
   initialData,
 }: AcademicYearFormProps) {
 
@@ -23,7 +25,9 @@ export default function AcademicYearForm({
     ? updateAcademicYear.bind(null, initialData.id)
     : createAcademicYear
 
-  const { execute, isPending } = useServerAction(action)
+  const { execute, isPending } = useServerAction(action, {
+    onSuccess,
+  })
 
   return (
     <form action={execute} className="space-y-6 max-w-xl">

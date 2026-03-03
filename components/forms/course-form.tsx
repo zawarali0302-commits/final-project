@@ -8,6 +8,9 @@ import { useServerAction } from "@/hook/useServerAction"
 
 interface CourseFormProps {
   departmentId: string
+  redirectTo?: string
+  onSuccess?: () => void
+  showHeading?: boolean
   initialData?: {
     id: string
     name: string
@@ -17,18 +20,29 @@ interface CourseFormProps {
   }
 }
 
-export function CourseForm({ departmentId, initialData }: CourseFormProps) {
+export function CourseForm({
+  departmentId,
+  initialData,
+  redirectTo,
+  onSuccess,
+  showHeading = true,
+}: CourseFormProps) {
   const action = initialData ? updateCourse.bind(null, initialData.id) : createCourse
 
-  const { execute, isPending } = useServerAction(action)
+  const { execute, isPending } = useServerAction(action, {
+    redirectTo,
+    onSuccess,
+  })
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>
-          {initialData ? "Edit Course" : "Add Course"}
-        </CardTitle>
-      </CardHeader>
+      {showHeading ? (
+        <CardHeader>
+          <CardTitle>
+            {initialData ? "Edit Course" : "Add Course"}
+          </CardTitle>
+        </CardHeader>
+      ) : null}
 
       <CardContent>
         <form
@@ -70,26 +84,7 @@ export function CourseForm({ departmentId, initialData }: CourseFormProps) {
           </div>
           {/* Hidden IDs */}
           <input type="hidden" name="departmentId" value={departmentId} />
-          {/* Department Selection */}
-          {/* <div className="space-y-1">
-            <label className="text-sm font-medium">Department</label>
-            <Select
-              value={selectedDept}
-              onValueChange={(val) => setSelectedDept(val)}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Department" />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div> */}
+         
 
           <Button type="submit" className="w-full " disabled={isPending}>
             {isPending

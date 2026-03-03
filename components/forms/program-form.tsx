@@ -17,6 +17,8 @@ import { useServerAction } from "@/hook/useServerAction"
 
 interface ProgramFormProps {
   departmentId: string
+  redirectTo?: string
+  onSuccess?: () => void
   initialData?: {
     id: string
     name: string
@@ -26,20 +28,22 @@ interface ProgramFormProps {
   }
 }
 
-export function ProgramForm({ departmentId, initialData }: ProgramFormProps) {
-  const [level, setLevel] = useState<ProgramLevel | undefined>(
-    initialData?.level
-  )
-  const [system, setSystem] = useState<ProgramSystem | undefined>(
-    initialData?.system
-  )
+export function ProgramForm({
+  departmentId,
+  initialData,
+  redirectTo = `/admin/departments/${departmentId}`,
+  onSuccess,
+}: ProgramFormProps) {
+  const [level, setLevel] = useState<ProgramLevel | "">(initialData?.level ?? "")
+  const [system, setSystem] = useState<ProgramSystem | "">(initialData?.system ?? "")
 
   const action = initialData
     ? updateProgram.bind(null, initialData.id)
     : createProgram
 
   const { execute, isPending } = useServerAction(action, {
-    redirectTo: "/admin/departments",
+    redirectTo,
+    onSuccess,
   })
 
   return (
@@ -67,23 +71,13 @@ export function ProgramForm({ departmentId, initialData }: ProgramFormProps) {
             value={departmentId}
           />
 
-          {/* Hidden Level */}
-          <input
-            type="hidden"
-            name="level"
-            value={level}
-          />
+          <input type="hidden" name="level" value={level} />
 
-          {/* Hidden System */}
-          <input
-            type="hidden"
-            name="system"
-            value={system}
-          />
+          <input type="hidden" name="system" value={system} />
 
           {/* Level Select */}
           <Select
-            defaultValue={initialData?.level}
+            value={level || undefined}
             onValueChange={(value) =>
               setLevel(value as ProgramLevel)
             }
@@ -106,7 +100,7 @@ export function ProgramForm({ departmentId, initialData }: ProgramFormProps) {
 
           {/* System Select */}
           <Select
-            defaultValue={initialData?.system}
+            value={system || undefined}
             onValueChange={(value) =>
               setSystem(value as ProgramSystem)
             }
@@ -125,7 +119,7 @@ export function ProgramForm({ departmentId, initialData }: ProgramFormProps) {
           </Select>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || !level || !system}>
               {isPending
                 ? initialData
                   ? "Updating..."

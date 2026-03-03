@@ -2,7 +2,6 @@
 
 import { addTeacher, editTeacher, removeTeacher } from "@/prisma/teacher.service"
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 
 export const createTeacher = async (data: FormData) => {
   const name = data.get("name") as string
@@ -13,7 +12,7 @@ export const createTeacher = async (data: FormData) => {
 
   try {
     await addTeacher(name, email, designation, departmentId, instituteId)
-    revalidatePath("/admin/teachers")
+    revalidatePath("/")
     return { success: true, message: "Teacher created successfully" }
   } catch (error: any) {
     console.error("Error creating teacher:", error)

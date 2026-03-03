@@ -16,5 +16,8 @@ export const getUserByClerkId = async () => {
     throw new Error("User not found in database")
   }
 
+
+
   return dbUser
 }
+

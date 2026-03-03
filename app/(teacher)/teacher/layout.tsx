@@ -4,6 +4,7 @@ import { ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { SignedIn, UserButton } from "@clerk/nextjs"
 
 const navItems = [
   { label: "Dashboard", href: "/teacher" },
@@ -19,7 +20,7 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-muted">
-      
+
       {/* Sidebar */}
       <aside className="w-64 bg-black text-white">
         <div className="p-6 text-xl font-bold">Resultify</div>
@@ -42,12 +43,14 @@ export default function TeacherLayout({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <div className="flex flex-col flex-1">
-        
+
         {/* Header */}
         <header className="h-16 bg-white border-b flex items-center justify-between px-6">
           <h1 className="text-lg font-semibold">Teacher Dashboard</h1>
           <div className="text-sm text-muted-foreground">
-            Teacher
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
           </div>
         </header>
 

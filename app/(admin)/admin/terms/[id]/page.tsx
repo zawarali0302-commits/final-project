@@ -1,10 +1,14 @@
 import { deleteSection } from "@/app/actions/section.actions"
 import Dropdown from "@/components/dropdown"
+import AssignTermCourseDialog from "@/components/forms/assign-term-course-dialog"
+import { AddSectionDialog } from "@/components/forms/add-section-dialog"
 import UnassignTermCourseForm from "@/components/forms/unassign-term-course-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getCoursesByInstituteId } from "@/prisma/course.service"
 import { getTermById } from "@/prisma/term.service"
+import { getUserByClerkId } from "@/prisma/user.service"
 import Link from "next/link"
 
 interface TermDetailPageProps {
@@ -17,10 +21,15 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
     const { id } = await params
 
     const term = await getTermById(id)
+    const user = await getUserByClerkId()
 
     if (!term) {
         return <div className="text-red-500">Term not found</div>
     }
+
+    const courses = user?.instituteId
+        ? await getCoursesByInstituteId(user.instituteId)
+        : []
 
     return (
         <div className="space-y-6 max-w-4xl">
@@ -50,14 +59,7 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Sections</CardTitle>
 
-                    <Button size="sm" asChild>
-                        <Link href={{
-                            pathname: `/admin/sections/create`,
-                            query: { termId: term.id },
-                        }}>
-                            Add Section
-                        </Link>
-                    </Button>
+                    <AddSectionDialog termId={term.id} />
                 </CardHeader>
                 <CardContent>
                     {term.sections.length === 0 ? (
@@ -79,8 +81,11 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
                                             {section.name}
                                         </TableCell>
 
-                                        <TableCell className="font-medium">{section.studentEnrollments.length}</TableCell>
-
+                                        <TableCell className="font-medium">
+                                            {new Set(
+                                                section.studentEnrollments.map((enrollment) => enrollment.studentId)
+                                            ).size}
+                                        </TableCell>
                                         <TableCell>
                                             <Dropdown
                                                 id={section.id}
@@ -108,11 +113,7 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle>Courses Offered</CardTitle>
-                    <Button asChild>
-                        <Link href={`/admin/terms/${id}/assign`}>
-                            Add Courses
-                        </Link>
-                    </Button>
+                    <AssignTermCourseDialog termId={term.id} courses={courses} />
                 </CardHeader>
 
                 <CardContent>

@@ -6,127 +6,122 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 interface CourseDetailPageProps {
-    params: {
-        id: string
-    }
+  params: Promise<{
+    id: string
+  }>
 }
 
 const CourseDetailPage = async ({ params }: CourseDetailPageProps) => {
-    const { id } = params
-    const clerkUser = await currentUser()
-    if (!clerkUser?.id) redirect("/sign-in")
+  const { id } = await params
 
-    const email = clerkUser.emailAddresses[0].emailAddress
+  const clerkUser = await currentUser()
+  if (!clerkUser?.id) redirect("/sign-in")
 
-    const user = await prisma.user.findUnique({
-        where: { email },
-        include: { teacher: true },
-    })
+  const email = clerkUser.emailAddresses[0].emailAddress
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      teacher: true,
+    },
+  })
 
-    if (!user || user.role !== "TEACHER" || !user.teacher) redirect("/")
+  if (!user || user.role !== "TEACHER" || !user.teacher) redirect("/")
 
-    const teacherId = user.teacher.id
-
-    // 1️⃣ Get all sections of this course assigned to this teacher
-    const sectionCourses = await prisma.sectionCourse.findMany({
-        where: {
-            teacherId,
-            courseOffering: {
-                course: {
-                    id: id,
-                },
-            }
-        },
+  // Route param is sectionCourse.id from /teacher/courses listing page.
+  const sectionCourse = await prisma.sectionCourse.findFirst({
+    where: {
+      id,
+      teacherId: user.teacher.id,
+    },
+    include: {
+      section: true,
+      courseOffering: {
         include: {
-            section: {
-                include: {
-                    exams: true, // exams in this section
-                },
+          term: {
+            include: {
+              program: true,
+              academicYear: true,
             },
-            courseOffering: {
-                include: {
-                    course: {
-                        include: {
-                            department: true,
-                        },
-                    },
-                },
+          },
+          course: {
+            include: {
+              department: true,
             },
+          },
+          courseExams: {
+            include: {
+              examEvent: true,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
         },
-    })
+      },
+    },
+  })
 
-    if (!sectionCourses || sectionCourses.length === 0) {
-        notFound()
-    }
+  if (!sectionCourse) notFound()
 
-    // 2️⃣ Flatten exams per section with status
-    const examsWithSections = sectionCourses.flatMap((sc) =>
-        sc.section.exams.map((exam) => ({
-            exam,
+  const { courseOffering, section } = sectionCourse
+  const exams = courseOffering.courseExams
 
-            section: sc.section,
-            courseOffering: sc.courseOffering,
-        }))
-    )
+  return (
+    <div className="mx-auto max-w-6xl space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">{courseOffering.course.name}</h1>
+        <p className="text-muted-foreground">
+          Course Code: {courseOffering.course.code} | Department:{" "}
+          {courseOffering.course.department.name}
+        </p>
+        <p className="text-muted-foreground">
+          Program: {courseOffering.term.program.name} | Academic Year:{" "}
+          {courseOffering.term.academicYear.name} | Term: {courseOffering.term.name} |
+          Section: {section.name}
+        </p>
+      </div>
 
-    return (
-        <div className="max-w-6xl mx-auto space-y-8">
+      <div>
+        <h2 className="text-xl font-semibold">Exams</h2>
 
-            {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold">{sectionCourses[0].courseOffering.course.name}</h1>
-                <p className="text-muted-foreground">
-                    Course Code: {sectionCourses[0].courseOffering.course.code} • Department: {sectionCourses[0].courseOffering.course.department.name}
-                </p>
-            </div>
+        {exams.length === 0 ? (
+          <div className="mt-2 rounded-xl bg-muted p-4 text-muted-foreground">
+            No exams created for this course offering yet.
+          </div>
+        ) : (
+          <div className="mt-2 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {exams.map((exam) => {
+              const isLocked = exam.examEvent.isLocked
+              return (
+                <Card key={exam.id} className="transition hover:shadow-lg">
+                  <CardHeader>
+                    <CardTitle>{exam.examEvent.type}</CardTitle>
+                  </CardHeader>
 
-            {/* Sections & Exams */}
-            <div className="space-y-6">
-                {sectionCourses.map((sc) => (
-                    <div key={sc.section.id}>
-                        <h2 className="text-xl font-semibold">Section {sc.section.name}</h2>
-
-                        {sc.section.exams.length === 0 ? (
-                            <div className="bg-muted rounded-xl p-4 text-muted-foreground">
-                                No exams assigned to this section yet.
-                            </div>
-                        ) : (
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-2">
-                                {sc.section.exams.map((exam) => {
-                                    // Check if teacher has submitted results for this exam
-                                    // This can be further improved by counting Results entries for all enrolled students
-                                    const isLocked = false // placeholder if you add isLocked logic
-                                    return (
-                                        <Card key={exam.id} className="hover:shadow-lg transition">
-                                            <CardHeader>
-                                                <CardTitle>{exam.title}</CardTitle>
-                                            </CardHeader>
-
-                                            <CardContent className="space-y-3">
-                                                <div className="text-sm text-muted-foreground space-y-1">
-                                                    <p>Type: {exam.type}</p>
-                                                    <p>Total Marks: {exam.totalMarks}</p>
-                                                    <p>Status: {isLocked ? "Locked" : "Open"}</p>
-                                                </div>
-
-                                                <Button asChild className="w-full" disabled={isLocked}>
-                                                    <Link
-                                                        href= {`/teacher/exams/${exam.id}`}
-                                                    >
-                                                        {isLocked ? "Locked" : "Enter Marks"}
-                                                    </Link>
-                                                </Button>
-                                            </CardContent>
-                                        </Card>
-                                    )
-                                })}
-                            </div>
-                        )}
+                  <CardContent className="space-y-3">
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <p>Total Marks: {exam.totalMarks}</p>
+                      <p>
+                        Date:{" "}
+                        {exam.date ? new Date(exam.date).toLocaleDateString() : "Not scheduled"}
+                      </p>
+                      <p>Status: {isLocked ? "Locked" : "Open"}</p>
                     </div>
-                ))}
-            </div>
-        </div>
-    )
+
+                    <Button asChild className="w-full" disabled={isLocked}>
+                      <Link href={`/teacher/exams/${exam.id}`}>
+                        {isLocked ? "Locked" : "Enter Marks"}
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default CourseDetailPage

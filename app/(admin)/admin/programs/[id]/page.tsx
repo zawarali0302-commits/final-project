@@ -1,5 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -13,6 +12,8 @@ import { getProgramById } from "@/prisma/program.service"
 import { ProgramLevel } from "@/app/generated/prisma/enums"
 import Dropdown from "@/components/dropdown"
 import { deleteTerm } from "@/app/actions/term.actions"
+import { getAcademicYearsByInstitute } from "@/prisma/academicYear.service"
+import { AddTermDialog } from "@/components/forms/add-term-dialog"
 
 interface ProgramDetailPageProps {
   params: Promise<{ id: string }>
@@ -25,6 +26,7 @@ export default async function ProgramDetailPage({
   const program = await getProgramById(id)
 
   if (!program) return <p>Program not found</p>
+  const academicYears = await getAcademicYearsByInstitute(program.department.instituteId)
 
   const isIntermediate = program.level === ProgramLevel.INTERMEDIATE
 
@@ -46,14 +48,12 @@ export default async function ProgramDetailPage({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Program Terms</CardTitle>
 
-          <Button size="sm" asChild>
-            <Link href={{
-              pathname: "/admin/terms/create",
-              query: { programId: id },
-            }}>
-              {isIntermediate ? "Create Part" : "Create Semester"}
-            </Link>
-          </Button>
+          <AddTermDialog
+            programId={id}
+            instituteId={program.department.instituteId}
+            academicYears={academicYears}
+            triggerLabel={isIntermediate ? "Create Part" : "Create Semester"}
+          />
         </CardHeader>
 
         <CardContent>
@@ -76,7 +76,9 @@ export default async function ProgramDetailPage({
                 {program.terms.map((term) => (
                   <TableRow key={term.id}>
                     <TableCell className="font-medium">
+                      <Link href={`/admin/terms/${term.id}`} className="hover:underline">
                       {term.name}
+                      </Link>
                     </TableCell>
 
                     <TableCell className="font-medium">{term.academicYear.name}</TableCell>

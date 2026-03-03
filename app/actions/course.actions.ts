@@ -17,7 +17,7 @@ export const createCourse = async (data: FormData) => {
     try {
         await addCourse({ name, code, credits: Number(credits), departmentId })
 
-        revalidatePath(`/admin/departments/${departmentId}`)
+        revalidatePath("/")
         return { success: true, message: "Course created successfully" }
     } catch (error) {
         return { success: false, message: "Failed to create course" }

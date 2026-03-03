@@ -13,6 +13,7 @@ export default async function EditDepartmentPage({ params }: EditDepartmentPageP
   return (
     <div className="max-w-xl">
       <DepartmentForm
+        instituteId={department.instituteId}
         initialData={department}
       />
     </div>

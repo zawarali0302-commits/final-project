@@ -1,134 +1,243 @@
-// "use client"
+import prisma from "@/lib/prisma"
+import { currentUser } from "@clerk/nextjs/server"
+import { redirect, notFound } from "next/navigation"
+import { revalidatePath } from "next/cache"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-// import prisma from "@/lib/prisma"
-// import { currentUser } from "@clerk/nextjs/server"
-// import { redirect, notFound } from "next/navigation"
-// import { Input } from "@/components/ui/input"
-// import { Button } from "@/components/ui/button"
-// import { useServerAction } from "@/hook/useServerAction"
-// import { createOrUpdateResults } from "@/app/actions/result.actions" // make this action to save marks
+interface EnterMarksPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
 
-// interface EnterMarksPageProps {
-//   params: {
-//     examId: string
-//   }
-// }
+const EnterMarksPage = async ({ params }: EnterMarksPageProps) => {
+  const { id } = await params
 
-// const EnterMarksPage = async ({ params }: EnterMarksPageProps) => {
-//   const { examId } = params
-//   const clerkUser = await currentUser()
-//   if (!clerkUser?.id) redirect("/sign-in")
+  const clerkUser = await currentUser()
+  if (!clerkUser?.id) redirect("/sign-in")
 
-//   const user = await prisma.user.findUnique({
-//     where: { email: clerkUser.emailAddresses[0].emailAddress },
-//     include: { teacher: true },
-//   })
+  const email = clerkUser.emailAddresses[0]?.emailAddress
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { clerkId: clerkUser.id },
+        ...(email ? [{ email }] : []),
+      ],
+    },
+    include: {
+      teacher: true,
+    },
+  })
 
-//   if (!user || user.role !== "TEACHER" || !user.teacher) redirect("/")
+  if (!user || user.role !== "TEACHER" || !user.teacher) redirect("/")
 
-//   const teacherId = user.teacher.id
+  const exam = await prisma.courseExam.findUnique({
+    where: { id },
+    include: {
+      examEvent: true,
+      courseOffering: {
+        include: {
+          course: {
+            include: {
+              department: true,
+            },
+          },
+          term: {
+            include: {
+              program: true,
+              academicYear: true,
+            },
+          },
+          sectionCourses: {
+            where: {
+              teacherId: user.teacher.id,
+            },
+            include: {
+              section: true,
+            },
+          },
+        },
+      },
+      studentMarks: true,
+    },
+  })
 
-//   // Fetch exam + section + students + existing results
-//   const exam = await prisma.exam.findUnique({
-//     where: { id: examId },
-//     include: {
-//       section: {
-//         include: {
-//           studentEnrollments: { include: { student: true } },
-//           sectionCourses: true, // check assigned teacher
-//         },
-//       },
-//       courseOffering: { include: { course: true } },
-//       results: { include: { enrollment: { include: { student: true } } } },
-//     },
-//   })
+  if (!exam) notFound()
 
-//   if (!exam) notFound()
+  if (exam.courseOffering.sectionCourses.length === 0) redirect("/")
 
-//   // Ensure teacher is assigned to this section
-//   const isTeacherAssigned = exam.section.sectionCourses.some(
-//     (sc) => sc.teacherId === teacherId
-//   )
-//   if (!isTeacherAssigned) redirect("/")
+  const sectionIds = exam.courseOffering.sectionCourses.map((sc) => sc.sectionId)
 
-//   // Prepare student rows
-//   const students = exam.section.studentEnrollments.map((enrollment) => {
-//     const existingResult = exam.results.find(
-//       (r) => r.enrollmentId === enrollment.id
-//     )
-//     return {
-//       enrollmentId: enrollment.id,
-//       student: enrollment.student,
-//       marks: existingResult?.marks || "",
-//       remarks: existingResult?.remarks || "",
-//     }
-//   })
+  const enrollments = await prisma.studentEnrollment.findMany({
+    where: {
+      courseOfferingId: exam.courseOfferingId,
+      sectionId: {
+        in: sectionIds,
+      },
+    },
+    include: {
+      student: true,
+    },
+    orderBy: {
+      student: {
+        rollNo: "asc",
+      },
+    },
+  })
 
-//   const { execute, isPending } = useServerAction(createOrUpdateResults)
+  const marksByStudentId = new Map(
+    exam.studentMarks.map((mark) => [mark.studentId, mark.obtainedMarks])
+  )
 
-//   return (
-//     <div className="max-w-4xl mx-auto space-y-6">
-//       <h1 className="text-2xl font-bold">
-//         Enter Marks - {exam.courseOffering.course.name} ({exam.section.name})
-//       </h1>
-//       <p className="text-muted-foreground">
-//         Exam: {exam.title} | Type: {exam.type} | Total Marks: {exam.totalMarks}
-//       </p>
+  const saveMarks = async (formData: FormData) => {
+    "use server"
 
-//       <form action={execute} className="space-y-4">
-//         <table className="w-full table-auto border-collapse border border-gray-200">
-//           <thead>
-//             <tr className="bg-gray-100">
-//               <th className="border px-2 py-1">Roll No</th>
-//               <th className="border px-2 py-1">Name</th>
-//               <th className="border px-2 py-1">Marks</th>
-//               <th className="border px-2 py-1">Remarks</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {students.map(({ enrollmentId, student, marks, remarks }) => (
-//               <tr key={enrollmentId}>
-//                 <td className="border px-2 py-1">{student.rollNo}</td>
-//                 <td className="border px-2 py-1">{student.name}</td>
-//                 <td className="border px-2 py-1">
-//                   <Input
-//                     type="number"
-//                     name={`marks[${enrollmentId}]`}
-//                     defaultValue={marks}
-//                     max={exam.totalMarks}
-//                     min={0}
-//                     required
-//                   />
-//                 </td>
-//                 <td className="border px-2 py-1">
-//                   <Input
-//                     name={`remarks[${enrollmentId}]`}
-//                     defaultValue={remarks}
-//                   />
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
+    const freshExam = await prisma.courseExam.findUnique({
+      where: { id },
+      include: {
+        examEvent: true,
+        courseOffering: {
+          include: {
+            sectionCourses: {
+              where: {
+                teacherId: user.teacher!.id,
+              },
+            },
+          },
+        },
+      },
+    })
 
-//         <Button type="submit" className="w-full mt-4">
-//           {isPending ? "Saving..." : "Save Marks"}
-//         </Button>
-//       </form>
-//     </div>
-//   )
-// }
+    if (!freshExam || freshExam.courseOffering.sectionCourses.length === 0) {
+      redirect("/")
+    }
 
-// export default EnterMarksPage
+    if (freshExam.examEvent.isLocked) {
+      redirect(`/teacher/exams/${id}`)
+    }
 
-import React from 'react'
+    const allowedSectionIds = freshExam.courseOffering.sectionCourses.map((sc) => sc.sectionId)
+    const freshEnrollments = await prisma.studentEnrollment.findMany({
+      where: {
+        courseOfferingId: freshExam.courseOfferingId,
+        sectionId: {
+          in: allowedSectionIds,
+        },
+      },
+      include: {
+        student: true,
+      },
+    })
 
-const page = () => {
+    const updates = []
+    for (const enrollment of freshEnrollments) {
+      const raw = formData.get(`marks_${enrollment.studentId}`)
+      if (typeof raw !== "string" || raw.trim() === "") {
+        continue
+      }
+
+      const obtainedMarks = Number(raw)
+      if (Number.isNaN(obtainedMarks) || obtainedMarks < 0 || obtainedMarks > freshExam.totalMarks) {
+        redirect(`/teacher/exams/${id}`)
+      }
+
+      updates.push(
+        prisma.studentMark.upsert({
+          where: {
+            studentId_courseExamId: {
+              studentId: enrollment.studentId,
+              courseExamId: freshExam.id,
+            },
+          },
+          update: {
+            obtainedMarks,
+          },
+          create: {
+            studentId: enrollment.studentId,
+            courseExamId: freshExam.id,
+            obtainedMarks,
+          },
+        })
+      )
+    }
+
+    if (updates.length > 0) {
+      await prisma.$transaction(updates)
+    }
+
+    revalidatePath(`/teacher/exams/${id}`)
+    redirect(`/teacher/exams/${id}`)
+  }
+
   return (
-    <div>
-      123
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Enter Marks</h1>
+        <p className="text-muted-foreground">
+          {exam.courseOffering.course.name} ({exam.courseOffering.course.code}) |{" "}
+          {exam.examEvent.type} | Total Marks: {exam.totalMarks}
+        </p>
+        <p className="text-muted-foreground">
+          Program: {exam.courseOffering.term.program.name} | Academic Year:{" "}
+          {exam.courseOffering.term.academicYear.name} | Term: {exam.courseOffering.term.name}
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Students ({enrollments.length}) {exam.examEvent.isLocked ? "- Locked" : ""}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {enrollments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No enrolled students found for your assigned section(s).
+            </p>
+          ) : (
+            <form action={saveMarks} className="space-y-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Roll No</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Marks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {enrollments.map((enrollment) => (
+                    <TableRow key={enrollment.id}>
+                      <TableCell>{enrollment.student.rollNo}</TableCell>
+                      <TableCell>{enrollment.student.name}</TableCell>
+                      <TableCell className="max-w-32">
+                        <Input
+                          type="number"
+                          name={`marks_${enrollment.studentId}`}
+                          defaultValue={marksByStudentId.get(enrollment.studentId) ?? ""}
+                          min={0}
+                          max={exam.totalMarks}
+                          step="0.01"
+                          disabled={exam.examEvent.isLocked}
+                          required
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <Button type="submit" className="w-full" disabled={exam.examEvent.isLocked}>
+                {exam.examEvent.isLocked ? "Exam Is Locked" : "Save Marks"}
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
-export default page
+export default EnterMarksPage

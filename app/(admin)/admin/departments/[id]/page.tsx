@@ -1,5 +1,8 @@
 import { deleteCourse } from "@/app/actions/course.actions"
 import { deleteProgram } from "@/app/actions/program.actions"
+import { AddProgramDialog } from "@/components/forms/add-program-dialog"
+import { AddCourseDialog } from "@/components/forms/add-course-dialog"
+import { AddTeacherDialog } from "@/components/forms/add-teacher-dialog"
 import { StatCard } from "@/components/admin/stat-card"
 import Dropdown from "@/components/dropdown"
 import { EmptyState } from "@/components/empty-state"
@@ -83,16 +86,7 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Programs</CardTitle>
-          <Button asChild size="sm">
-            <Link
-              href={{
-                pathname: "/admin/programs/create",
-                query: { departmentId: id },
-              }}
-            >
-              Add Program
-            </Link>
-          </Button>
+          <AddProgramDialog departmentId={id} />
         </CardHeader>
 
         <CardContent>
@@ -100,11 +94,7 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
             <EmptyState
               title="No programs found"
               description="Create your first program under this department"
-              button="Add Program"
-              href={{
-                pathname: "/admin/programs/create",
-                query: { departmentId: id },
-              }}
+              action={<AddProgramDialog departmentId={id} triggerLabel="Add Program" />}
               icon={<Building />}
             />
           ) : (
@@ -160,14 +150,11 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Teachers</CardTitle>
-          <Button asChild size="sm">
-            <Link href={{
-              pathname: "/admin/teachers/create",
-              query: { departmentId: id }
-            }}>
-              Add Teacher
-            </Link>
-          </Button>
+          <AddTeacherDialog
+            instituteId={department.instituteId}
+            departments={[{ id: department.id, name: department.name }]}
+            defaultDepartmentId={department.id}
+          />
         </CardHeader>
 
         <CardContent>
@@ -175,11 +162,14 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
             <EmptyState
               title="No teachers found"
               description="Add teachers to this department"
-              button="Add Teacher"
-              href={{
-                pathname: "/admin/teachers/create",
-                query: { departmentId: id }
-              }}
+              action={
+                <AddTeacherDialog
+                  instituteId={department.instituteId}
+                  departments={[{ id: department.id, name: department.name }]}
+                  defaultDepartmentId={department.id}
+                  triggerLabel="Add Teacher"
+                />
+              }
               icon={<GraduationCap />}
             />
           ) : (
@@ -212,14 +202,7 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Courses</CardTitle>
-          <Button asChild size="sm">
-            <Link href={{
-              pathname: "/admin/courses/create",
-              query: { departmentId: id }
-            }}>
-              Add Course
-            </Link>
-          </Button>
+          <AddCourseDialog departmentId={id} />
         </CardHeader>
 
         <CardContent>
@@ -227,11 +210,7 @@ const DepartmentDetailPage = async ({ params }: DepartmentDetailPageProps) => {
             <EmptyState
               title="No course found"
               description="Add courses to this department"
-              button="Add Course"
-              href={{
-                pathname: "/admin/courses/create",
-                query: { departmentId: id }
-              }}
+              action={<AddCourseDialog departmentId={id} triggerLabel="Add Course" />}
               icon={<LibraryBig />}
             />
           ) : (

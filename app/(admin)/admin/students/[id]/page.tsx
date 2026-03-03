@@ -66,19 +66,26 @@ const StudentDetailPage = async ({ params }: StudentDetailPageProps) => {
                                             </TableHeader>
 
                                             <TableBody>
-                                                {enrollment.section?.sectionCourses.map((sc) => (
-                                                    <TableRow key={sc.id}>
-                                                        <TableCell>
-                                                            {sc.courseOffering.course.name}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {sc.courseOffering.course.code}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {sc.courseOffering.course.credits}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
+                                                {enrollment.section?.sectionCourses
+                                                    .slice()
+                                                    .sort((a, b) =>
+                                                        (a.courseOffering.course.name || "").localeCompare(
+                                                            b.courseOffering.course.name || ""
+                                                        )
+                                                    )
+                                                    .map((sc) => (
+                                                        <TableRow key={sc.id}>
+                                                            <TableCell>
+                                                                {sc.courseOffering.course.name}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {sc.courseOffering.course.code}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {sc.courseOffering.course.credits}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
                                             </TableBody>
                                         </Table>
                                     )}

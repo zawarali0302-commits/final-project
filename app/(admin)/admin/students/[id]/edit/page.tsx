@@ -1,11 +1,10 @@
 import StudentForm from "@/components/forms/student-form"
-import { getDepartments } from "@/prisma/department.service"
-import { getPrograms } from "@/prisma/program.service"
-import { getTerms } from "@/prisma/term.service"
-import { getSections } from "@/prisma/section.service"
-import { getSessions } from "@/prisma/session.service"
+import { getDepartmentsByInstitute } from "@/prisma/department.service"
+import { getProgramsByInstitute } from "@/prisma/program.service"
+import { getTermsByInstitute } from "@/prisma/term.service"
+import { getSectionsByInstitute } from "@/prisma/section.service"
+import { getSessionsByInstitute } from "@/prisma/session.service"
 import { getStudentById } from "@/prisma/student.service"
-import prisma from "@/lib/prisma"
 import { notFound } from "next/navigation"
 
 interface UpdateStudentPageProps {
@@ -21,14 +20,13 @@ export default async function UpdateStudentPage({
     const student = await getStudentById(id)
 
     if (!student) notFound()
+    if (!student.instituteId) notFound()
 
-    const institute = await prisma.institute.findFirst()
-
-    const departments = await getDepartments()
-    const programs = await getPrograms()
-    const terms = await getTerms()
-    const sections = await getSections()
-    const sessions = await getSessions()
+    const departments = await getDepartmentsByInstitute(student.instituteId)
+    const programs = await getProgramsByInstitute(student.instituteId)
+    const terms = await getTermsByInstitute(student.instituteId)
+    const sections = await getSectionsByInstitute(student.instituteId)
+    const sessions = await getSessionsByInstitute(student.instituteId)
 
     // Get current section from enrollment
     const currentEnrollment = student.studentEnrollments[0]
@@ -40,7 +38,7 @@ export default async function UpdateStudentPage({
             </h1>
 
             <StudentForm
-                instituteId={institute?.id}
+                instituteId={student.instituteId}
                 departments={departments}
                 programs={programs}
                 terms={terms}

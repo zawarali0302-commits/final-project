@@ -5,20 +5,28 @@ import { useServerAction } from "@/hook/useServerAction"
 
 interface DepartmentFormProps {
   instituteId: string
+  redirectTo?: string
+  onSuccess?: () => void
   initialData?: {
     id: string
     name: string
   }
 }
 
-export function DepartmentForm({ instituteId, initialData }: DepartmentFormProps) {
+export function DepartmentForm({
+  instituteId,
+  initialData,
+  redirectTo = "/admin/departments",
+  onSuccess,
+}: DepartmentFormProps) {
 
   const action = initialData
     ? updateDepartment.bind(null, initialData.id)
     : createDepartment
 
   const { execute, isPending } = useServerAction(action, {
-    redirectTo: "/admin/departments",
+    redirectTo,
+    onSuccess,
   })
 
   return (
