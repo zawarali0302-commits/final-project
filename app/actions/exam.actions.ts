@@ -34,7 +34,11 @@ export const createExam = async (data: FormData) => {
     )
 
     revalidatePath(`/admin/sections/${sectionId}`)
-    return { success: true, message: "Exam created successfully" }
+    return {
+      success: true,
+      message:
+        "Exam created successfully. It will be used for all sections linked to this course offering.",
+    }
   } catch (error) {
     return {
       success: false,

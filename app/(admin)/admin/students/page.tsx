@@ -1,5 +1,6 @@
 import { deleteStudent } from '@/app/actions/student.actions'
 import { AddStudentDialog } from '@/components/forms/add-student-dialog'
+import { ImportStudentsDialog } from '@/components/forms/import-students-dialog'
 import Dropdown from '@/components/dropdown'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -37,14 +38,23 @@ const StudentPage = async () => {
                     </p>
                 </div>
 
-                <AddStudentDialog
-                    instituteId={dbUser.instituteId}
-                    departments={departments}
-                    programs={programs}
-                    terms={terms}
-                    sections={sections}
-                    sessions={sessions}
-                />
+                <div className="flex items-center gap-2">
+                    <ImportStudentsDialog
+                        instituteId={dbUser.instituteId}
+                        programs={programs}
+                        terms={terms}
+                        sections={sections}
+                        sessions={sessions}
+                    />
+                    <AddStudentDialog
+                        instituteId={dbUser.instituteId}
+                        departments={departments}
+                        programs={programs}
+                        terms={terms}
+                        sections={sections}
+                        sessions={sessions}
+                    />
+                </div>
             </div>
 
             <Card>

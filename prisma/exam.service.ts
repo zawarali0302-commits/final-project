@@ -63,7 +63,9 @@ export const addExam = async (
     })
 
     if (existingCourseExam) {
-      throw new Error("An exam already exists for this course in the selected exam event")
+      throw new Error(
+        "An exam already exists for this course in the selected exam event. That exam applies to all sections linked to this course offering."
+      )
     }
 
     await prisma.courseExam.create({

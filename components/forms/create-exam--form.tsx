@@ -48,6 +48,10 @@ const CreateExamForm = ({ sections }: Props) => {
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Create Exam</h1>
+      <p className="text-sm text-muted-foreground">
+        One exam is created per course offering. If the same course is assigned to multiple sections in the same term,
+        creating it once will apply to all linked sections.
+      </p>
 
       <form action={execute} className="space-y-4">
         <div>
@@ -70,6 +74,9 @@ const CreateExamForm = ({ sections }: Props) => {
               </option>
             ))}
           </select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Section is used to pick a valid course offering.
+          </p>
         </div>
 
         <div>
@@ -93,6 +100,11 @@ const CreateExamForm = ({ sections }: Props) => {
           {selectedSection && sectionCourses.length === 0 ? (
             <p className="text-sm text-muted-foreground mt-1">
               This section has no assigned courses yet. Assign courses first.
+            </p>
+          ) : null}
+          {selectedSection && sectionCourses.length > 0 ? (
+            <p className="text-xs text-muted-foreground mt-1">
+              If this course is shared by other sections in this term, this exam will also be used there.
             </p>
           ) : null}
         </div>
