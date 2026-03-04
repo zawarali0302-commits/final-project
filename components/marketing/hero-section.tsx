@@ -4,6 +4,7 @@ import StatCard from "./stat-card"
 import { currentUser } from "@clerk/nextjs/server"
 import prisma from "@/lib/prisma"
 import { UserRole } from "@/app/generated/prisma/enums"
+import { SignInButton, SignUpButton } from "@clerk/nextjs"
 
 const stats = [
   {
@@ -31,6 +32,7 @@ const stats = [
 const HeroSection = async () => {
   const clerkUser = await currentUser()
   let showRegisterInstitute = false
+  const isSignedIn = Boolean(clerkUser)
 
   if (clerkUser) {
     const email =
@@ -69,14 +71,20 @@ const HeroSection = async () => {
           with secure workflows and consistent academic reporting.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          {showRegisterInstitute && (
+          {showRegisterInstitute ? (
             <Button asChild>
               <Link href="/register-institute">Register Your Institute</Link>
             </Button>
+          ) : !isSignedIn ? (
+            <SignUpButton>
+              <Button>Sign Up To Get Started</Button>
+            </SignUpButton>
+          ) : null}
+          {!isSignedIn && (
+            <SignInButton>
+              <Button variant="outline">Login</Button>
+            </SignInButton>
           )}
-          <Button asChild variant="outline">
-            <Link href="/login">Explore Dashboard</Link>
-          </Button>
         </div>
       </div>
 
