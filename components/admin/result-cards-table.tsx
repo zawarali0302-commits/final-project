@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import {
   Table,
@@ -51,58 +52,99 @@ export default function ResultCardsTable({ rows }: ResultCardsTableProps) {
     })
   }, [rows, query])
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center">
-        <h1 className="text-2xl font-bold">Student Results</h1>
-        <span className="ml-auto w-1/3">
-          <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by student name or roll no"
-        />
-        </span>
+  const publishedCount = useMemo(
+    () => rows.filter((row) => row.isPublished).length,
+    [rows]
+  )
 
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Student Results</h2>
+          <p className="text-sm text-muted-foreground">
+            {filteredRows.length} of {rows.length} students shown
+          </p>
+        </div>
+        <div className="w-full sm:w-80">
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by student name or roll no"
+          />
+        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Summary</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Subjects</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Total</p>
+            <p className="mt-1 text-2xl font-bold">{rows.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Published</p>
+            <p className="mt-1 text-2xl font-bold">{publishedCount}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs font-medium uppercase text-muted-foreground">Draft</p>
+            <p className="mt-1 text-2xl font-bold">{rows.length - publishedCount}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {filteredRows.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-sm text-muted-foreground">
+            No students match your search.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
           {filteredRows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="font-medium">
-                <div>{row.studentName}</div>
-                <div className="text-xs text-muted-foreground">
-                  Roll No: {row.rollNo}
+            <Card key={row.id}>
+              <CardHeader className="pb-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle className="text-base">{row.studentName}</CardTitle>
+                    <p className="text-xs text-muted-foreground">Roll No: {row.rollNo}</p>
+                  </div>
+                  <Badge variant={row.isPublished ? "default" : "secondary"}>
+                    {row.isPublished ? "Published" : "Draft"}
+                  </Badge>
                 </div>
-              </TableCell>
-              <TableCell>
-                <div className="text-sm">
-                  {row.obtainedMarks} / {row.totalMarks}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                  <div className="rounded-md border p-2">
+                    <p className="text-xs text-muted-foreground">Marks</p>
+                    <p className="font-medium">
+                      {row.obtainedMarks} / {row.totalMarks}
+                    </p>
+                  </div>
+                  <div className="rounded-md border p-2">
+                    <p className="text-xs text-muted-foreground">Percentage</p>
+                    <p className="font-medium">{row.percentage}%</p>
+                  </div>
+                  <div className="rounded-md border p-2">
+                    <p className="text-xs text-muted-foreground">Grade</p>
+                    <p className="font-medium">{row.grade}</p>
+                  </div>
+                  <div className="rounded-md border p-2">
+                    <p className="text-xs text-muted-foreground">GPA</p>
+                    <p className="font-medium">{row.gpa}</p>
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  {row.percentage}% | Grade {row.grade} | GPA {row.gpa}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant={row.isPublished ? "default" : "secondary"}>
-                  {row.isPublished ? "Published" : "Draft"}
-                </Badge>
-              </TableCell>
-              <TableCell className="min-w-[320px]">
-                <details>
-                  <summary className="cursor-pointer text-sm text-blue-600">
+
+                <details className="group">
+                  <summary className="cursor-pointer text-sm font-medium text-primary">
                     View {row.subjectRows.length} subject
                     {row.subjectRows.length === 1 ? "" : "s"}
                   </summary>
-                  <div className="mt-2 rounded-md border p-2">
+                  <div className="mt-3 overflow-hidden rounded-md border">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -123,11 +165,11 @@ export default function ResultCardsTable({ rows }: ResultCardsTableProps) {
                     </Table>
                   </div>
                 </details>
-              </TableCell>
-            </TableRow>
+              </CardContent>
+            </Card>
           ))}
-        </TableBody>
-      </Table>
+        </div>
+      )}
     </div>
   )
 }

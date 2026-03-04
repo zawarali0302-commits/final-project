@@ -46,7 +46,7 @@ export default function AcademicYearForm({
           required
           defaultValue={initialData?.name}
           placeholder="2024-2025"
-          className="w-full border rounded-md p-2"
+          className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
         />
       </div>
 
@@ -65,7 +65,7 @@ export default function AcademicYearForm({
               ? new Date(initialData.startDate).toISOString().split("T")[0]
               : ""
           }
-          className="w-full border rounded-md p-2"
+          className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
         />
       </div>
 
@@ -84,7 +84,7 @@ export default function AcademicYearForm({
               ? new Date(initialData.endDate).toISOString().split("T")[0]
               : ""
           }
-          className="w-full border rounded-md p-2"
+          className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
         />
       </div>
 

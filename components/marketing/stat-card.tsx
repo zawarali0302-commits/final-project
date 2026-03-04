@@ -5,9 +5,9 @@ interface StatCardProps {
 
 const StatCard = ({ value, label }: StatCardProps) => {
 return (
-<div>
-<p className="text-3xl font-bold">{value}</p>
-<p className="text-gray-500">{label}</p>
+<div className="rounded-2xl border bg-background p-4 text-center">
+<p className="text-3xl font-semibold tracking-tight">{value}</p>
+<p className="text-sm text-muted-foreground">{label}</p>
 </div>
 );
 }

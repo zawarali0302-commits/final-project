@@ -16,12 +16,7 @@ import {
   FieldLabel,
   FieldDescription,
 } from "@/components/ui/field"
-import { Metadata } from "next"
-
-const metadata: Metadata = {
-  title: "Register Your Institution",
-  description: "Create an institute account to start generating result cards",
-}
+import Link from "next/link"
 
 type SignupFormData = {
   institutionName: string
@@ -80,7 +75,7 @@ export function SignupForm() {
                 <FieldLabel>Institution Type</FieldLabel>
                 <select
                   {...register("institutionType", { required: true })}
-                  className="w-full rounded-md border px-3 py-2 text-sm"
+                  className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
                 >
                   <option value="">Select type</option>
                   <option value="school">School</option>
@@ -148,9 +143,9 @@ export function SignupForm() {
 
               <FieldDescription className="text-center">
                 Already registered?{" "}
-                <a href="/login" className="font-medium">
+                <Link href="/login" className="font-medium underline">
                   Sign in
-                </a>
+                </Link>
               </FieldDescription>
 
             </FieldGroup>

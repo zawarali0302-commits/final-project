@@ -190,7 +190,7 @@ export default function StudentForm(props: StudentFormProps) {
             <DialogTrigger asChild>
               <button
                 type="button"
-                className="text-sm text-blue-600 disabled:text-muted-foreground"
+                className="text-sm font-medium text-primary hover:underline disabled:text-muted-foreground"
                 disabled={!selectedProgram || !instituteId}
               >
                 + Add Session

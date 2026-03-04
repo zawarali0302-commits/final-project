@@ -11,6 +11,69 @@ export const getSectionCourses = async () => {
   })
 }
 
+export const getSectionCoursesByTeacherId = async (teacherId: string) => {
+  return prisma.sectionCourse.findMany({
+    where: {
+      teacherId,
+    },
+    include: {
+      section: true,
+      courseOffering: {
+        include: {
+          term: {
+            include: {
+              program: true,
+            },
+          },
+          course: {
+            include: {
+              department: true,
+            },
+          },
+        },
+      },
+    },
+  })
+}
+
+export const getSectionCourseDetailByTeacher = async (
+  sectionCourseId: string,
+  teacherId: string
+) => {
+  return prisma.sectionCourse.findFirst({
+    where: {
+      id: sectionCourseId,
+      teacherId,
+    },
+    include: {
+      section: true,
+      courseOffering: {
+        include: {
+          term: {
+            include: {
+              program: true,
+              academicYear: true,
+            },
+          },
+          course: {
+            include: {
+              department: true,
+            },
+          },
+          courseExams: {
+            include: {
+              examEvent: true,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+        },
+      },
+    },
+  })
+}
+
 
 
 export async function addSectionCourseTeacher(sectionCourseId: string, teacherId: string | null) {

@@ -46,33 +46,47 @@ const DashboardStats = async () => {
       id: 1,
       title: "Students",
       value: students,
-      icon: <Users className="h-5 w-5 text-muted-foreground" />,
+      subtitle: "Active enrollment",
+      icon: <Users className="h-5 w-5 text-sky-700" />,
+      viewAllHref: "/admin/students",
     },
     {
       id: 2,
       title: "Teachers",
       value: teachers,
-      icon: <GraduationCap className="h-5 w-5 text-muted-foreground" />,
+      subtitle: "Faculty members",
+      icon: <GraduationCap className="h-5 w-5 text-emerald-700" />,
+      viewAllHref: "/admin/teachers",
     },
     {
       id: 3,
       title: "Programs",
       value: programs,
-      icon: <LibraryBig className="h-5 w-5 text-muted-foreground" />,
+      subtitle: "Academic offerings",
+      icon: <LibraryBig className="h-5 w-5 text-amber-700" />,
+      viewAllHref: "/admin/programs",
     },
     {
       id: 4,
       title: "Results Generated",
       value: results,
-      icon: <FileText className="h-5 w-5 text-muted-foreground" />,
+      subtitle: "Published records",
+      icon: <FileText className="h-5 w-5 text-violet-700" />,
+      viewAllHref: "/admin/results",
     },
   ]
 
   return (
-    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <ul className="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {statItems.map((item) => (
-        <li key={item.id}>
-          <StatCard title={item.title} value={item.value} icon={item.icon} />
+        <li key={item.id} className="h-full">
+          <StatCard
+            title={item.title}
+            value={item.value}
+            subtitle={item.subtitle}
+            icon={item.icon}
+            viewAllHref={item.viewAllHref}
+          />
         </li>
       ))}
     </ul>

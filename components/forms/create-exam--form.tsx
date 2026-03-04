@@ -59,7 +59,7 @@ const CreateExamForm = ({ sections }: Props) => {
           <select
             id="sectionId"
             name="sectionId"
-            className="w-full border p-2 rounded"
+            className="mt-1 h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
             required
             value={sectionId}
             onChange={(e) => {
@@ -84,7 +84,7 @@ const CreateExamForm = ({ sections }: Props) => {
           <select
             id="courseOfferingId"
             name="courseOfferingId"
-            className="w-full border p-2 rounded"
+            className="mt-1 h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
             required
             value={courseOfferingId}
             onChange={(e) => setCourseOfferingId(e.target.value)}
@@ -111,7 +111,12 @@ const CreateExamForm = ({ sections }: Props) => {
 
         <div>
           <Label htmlFor="type">Type</Label>
-          <select id="type" name="type" className="w-full border p-2 rounded" required>
+          <select
+            id="type"
+            name="type"
+            className="mt-1 h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+            required
+          >
             <option value="MID">Mid</option>
             <option value="FINAL">Final</option>
             <option value="QUIZ">Quiz</option>

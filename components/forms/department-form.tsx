@@ -2,6 +2,7 @@
 
 import { createDepartment, updateDepartment } from "@/app/actions/department.actions"
 import { useServerAction } from "@/hook/useServerAction"
+import { Button } from "@/components/ui/button"
 
 interface DepartmentFormProps {
   instituteId: string
@@ -47,15 +48,14 @@ export function DepartmentForm({
           defaultValue={initialData?.name}
           required
           placeholder="e.g. Computer Science"
-          className="w-full border p-2 rounded-md"
+          className="mt-2 h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
         />
       </div>
 
       <div className="flex justify-end">
-        <button
+        <Button
           type="submit"
           disabled={isPending}
-          className="px-4 py-2 bg-black text-white rounded-md"
         >
           {isPending
             ? initialData
@@ -64,7 +64,7 @@ export function DepartmentForm({
             : initialData
               ? "Update Department"
               : "Create Department"}
-        </button>
+        </Button>
       </div>
     </form>
   )

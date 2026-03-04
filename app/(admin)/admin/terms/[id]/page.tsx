@@ -78,7 +78,14 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
                                 {term.sections.map((section) => (
                                     <TableRow key={section.id}>
                                         <TableCell className="font-medium">
-                                            {section.name}
+                                            <Link href={{
+                                                pathname: `/admin/sections/${section.id}`,
+                                                query: { termId: term.id },
+                                            }}
+                                            className="text-primary hover:underline"
+                                            >
+                                                {section.name}
+                                            </Link>
                                         </TableCell>
 
                                         <TableCell className="font-medium">

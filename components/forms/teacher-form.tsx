@@ -74,7 +74,7 @@ export default function TeacherForm({
         <Label>Department</Label>
         <select
           name="departmentId"
-          className="w-full border rounded-md p-2"
+          className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
           required
           defaultValue={initialData?.departmentId ?? defaultDepartmentId ?? ""}
         >

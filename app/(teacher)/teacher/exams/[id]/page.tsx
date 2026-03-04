@@ -1,11 +1,15 @@
-import prisma from "@/lib/prisma"
 import { currentUser } from "@clerk/nextjs/server"
 import { redirect, notFound } from "next/navigation"
-import { revalidatePath } from "next/cache"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getUserWithTeacherByClerkIdOrEmail } from "@/prisma/user.service"
+import {
+  getStudentEnrollmentsForCourseOfferingSections,
+  getTeacherExamDetailByExamId,
+} from "@/prisma/exam.service"
+import { submitTeacherExamMarks } from "@/app/actions/exam.actions"
 
 interface EnterMarksPageProps {
   params: Promise<{
@@ -20,50 +24,12 @@ const EnterMarksPage = async ({ params }: EnterMarksPageProps) => {
   if (!clerkUser?.id) redirect("/sign-in")
 
   const email = clerkUser.emailAddresses[0]?.emailAddress
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { clerkId: clerkUser.id },
-        ...(email ? [{ email }] : []),
-      ],
-    },
-    include: {
-      teacher: true,
-    },
-  })
+  const user = await getUserWithTeacherByClerkIdOrEmail(clerkUser.id, email)
 
   if (!user || user.role !== "TEACHER" || !user.teacher) redirect("/")
+  const teacherId = user.teacher.id
 
-  const exam = await prisma.courseExam.findUnique({
-    where: { id },
-    include: {
-      examEvent: true,
-      courseOffering: {
-        include: {
-          course: {
-            include: {
-              department: true,
-            },
-          },
-          term: {
-            include: {
-              program: true,
-              academicYear: true,
-            },
-          },
-          sectionCourses: {
-            where: {
-              teacherId: user.teacher.id,
-            },
-            include: {
-              section: true,
-            },
-          },
-        },
-      },
-      studentMarks: true,
-    },
-  })
+  const exam = await getTeacherExamDetailByExamId(id, teacherId)
 
   if (!exam) notFound()
 
@@ -71,122 +37,34 @@ const EnterMarksPage = async ({ params }: EnterMarksPageProps) => {
 
   const sectionIds = exam.courseOffering.sectionCourses.map((sc) => sc.sectionId)
 
-  const enrollments = await prisma.studentEnrollment.findMany({
-    where: {
-      courseOfferingId: exam.courseOfferingId,
-      sectionId: {
-        in: sectionIds,
-      },
-    },
-    include: {
-      student: true,
-    },
-    orderBy: {
-      student: {
-        rollNo: "asc",
-      },
-    },
-  })
+  const enrollments = await getStudentEnrollmentsForCourseOfferingSections(
+    exam.courseOfferingId,
+    sectionIds
+  )
 
   const marksByStudentId = new Map(
     exam.studentMarks.map((mark) => [mark.studentId, mark.obtainedMarks])
   )
 
-  const saveMarks = async (formData: FormData) => {
-    "use server"
-
-    const freshExam = await prisma.courseExam.findUnique({
-      where: { id },
-      include: {
-        examEvent: true,
-        courseOffering: {
-          include: {
-            sectionCourses: {
-              where: {
-                teacherId: user.teacher!.id,
-              },
-            },
-          },
-        },
-      },
-    })
-
-    if (!freshExam || freshExam.courseOffering.sectionCourses.length === 0) {
-      redirect("/")
-    }
-
-    if (freshExam.examEvent.isLocked) {
-      redirect(`/teacher/exams/${id}`)
-    }
-
-    const allowedSectionIds = freshExam.courseOffering.sectionCourses.map((sc) => sc.sectionId)
-    const freshEnrollments = await prisma.studentEnrollment.findMany({
-      where: {
-        courseOfferingId: freshExam.courseOfferingId,
-        sectionId: {
-          in: allowedSectionIds,
-        },
-      },
-      include: {
-        student: true,
-      },
-    })
-
-    const updates = []
-    for (const enrollment of freshEnrollments) {
-      const raw = formData.get(`marks_${enrollment.studentId}`)
-      if (typeof raw !== "string" || raw.trim() === "") {
-        continue
-      }
-
-      const obtainedMarks = Number(raw)
-      if (Number.isNaN(obtainedMarks) || obtainedMarks < 0 || obtainedMarks > freshExam.totalMarks) {
-        redirect(`/teacher/exams/${id}`)
-      }
-
-      updates.push(
-        prisma.studentMark.upsert({
-          where: {
-            studentId_courseExamId: {
-              studentId: enrollment.studentId,
-              courseExamId: freshExam.id,
-            },
-          },
-          update: {
-            obtainedMarks,
-          },
-          create: {
-            studentId: enrollment.studentId,
-            courseExamId: freshExam.id,
-            obtainedMarks,
-          },
-        })
-      )
-    }
-
-    if (updates.length > 0) {
-      await prisma.$transaction(updates)
-    }
-
-    revalidatePath(`/teacher/exams/${id}`)
-    redirect(`/teacher/exams/${id}`)
-  }
+  const action = submitTeacherExamMarks.bind(null, id, teacherId)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Enter Marks</h1>
-        <p className="text-muted-foreground">
-          {exam.courseOffering.course.name} ({exam.courseOffering.course.code}) |{" "}
-          {exam.examEvent.type} | Total Marks: {exam.totalMarks}
-        </p>
-        <p className="text-muted-foreground">
-          Program: {exam.courseOffering.term.program.name} | Academic Year:{" "}
-          {exam.courseOffering.term.academicYear.name} | Term: {exam.courseOffering.term.name}
-        </p>
-      </div>
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-7">
+          <h1 className="text-2xl font-semibold sm:text-3xl">Enter Marks</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {exam.courseOffering.course.name} ({exam.courseOffering.course.code}) |{" "}
+            {exam.examEvent.type} | Total Marks: {exam.totalMarks}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Program: {exam.courseOffering.term.program.name} | Academic Year:{" "}
+            {exam.courseOffering.term.academicYear.name} | Term: {exam.courseOffering.term.name}
+          </p>
+        </div>
+      </section>
 
-      <Card>
+      <Card className="border-border/70 py-0">
         <CardHeader>
           <CardTitle>
             Students ({enrollments.length}) {exam.examEvent.isLocked ? "- Locked" : ""}
@@ -198,7 +76,7 @@ const EnterMarksPage = async ({ params }: EnterMarksPageProps) => {
               No enrolled students found for your assigned section(s).
             </p>
           ) : (
-            <form action={saveMarks} className="space-y-4">
+            <form action={action} className="space-y-4">
               <Table>
                 <TableHeader>
                   <TableRow>

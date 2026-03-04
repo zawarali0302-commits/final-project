@@ -1,8 +1,10 @@
 "use server"
 
 import { addExam } from "@/prisma/exam.service"
+import { saveTeacherExamMarks } from "@/prisma/exam.service"
 import type { ExamType } from "@/app/generated/prisma/client"
 import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
 
 export const createExam = async (data: FormData) => {
   const type = data.get("type") as ExamType
@@ -45,4 +47,23 @@ export const createExam = async (data: FormData) => {
       message: error instanceof Error ? error.message : "Failed to create exam",
     }
   }
+}
+
+export const submitTeacherExamMarks = async (
+  examId: string,
+  teacherId: string,
+  formData: FormData
+) => {
+  const result = await saveTeacherExamMarks(examId, teacherId, formData)
+
+  if (result.status === "no_access") {
+    redirect("/")
+  }
+
+  if (result.status === "locked" || result.status === "invalid_marks") {
+    redirect(`/teacher/exams/${examId}`)
+  }
+
+  revalidatePath(`/teacher/exams/${examId}`)
+  redirect(`/teacher/exams/${examId}`)
 }

@@ -13,12 +13,21 @@ import { getTermsByInstitute } from '@/prisma/term.service'
 import { getUserByClerkId } from '@/prisma/user.service'
 import Link from 'next/link'
 
-const StudentPage = async () => {
+interface StudentPageProps {
+    searchParams?: Promise<{
+        sectionId?: string
+    }>
+}
+
+const StudentPage = async ({ searchParams }: StudentPageProps) => {
     const dbUser = await getUserByClerkId()
     
       if (!dbUser?.instituteId) {
         return <div>No institute found</div>
       }
+    const query = searchParams ? await searchParams : undefined
+    const selectedSectionId = query?.sectionId?.trim() || ""
+
     const students = await getStudentsByInstitute(
         dbUser.instituteId
     )
@@ -27,18 +36,29 @@ const StudentPage = async () => {
     const terms = await getTermsByInstitute(dbUser.instituteId)
     const sections = await getSectionsByInstitute(dbUser.instituteId)
     const sessions = await getSessionsByInstitute(dbUser.instituteId)
+    const filteredStudents = selectedSectionId
+        ? students.filter((student) =>
+            student.studentEnrollments.some((enrollment) => enrollment.sectionId === selectedSectionId)
+        )
+        : students
+
+    const selectedSection = selectedSectionId
+        ? sections.find((section) => section.id === selectedSectionId)
+        : null
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-2xl font-bold">Students</h2>
                     <p className="text-muted-foreground">
-                        Manage students in your institution
+                        {selectedSection
+                            ? `Students enrolled in Section ${selectedSection.name}`
+                            : "Manage students in your institution"}
                     </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <ImportStudentsDialog
                         instituteId={dbUser.instituteId}
                         programs={programs}
@@ -59,7 +79,7 @@ const StudentPage = async () => {
 
             <Card>
                 <CardContent>
-                    {students.length === 0 ? (
+                    {filteredStudents.length === 0 ? (
                         <p>No student found</p>
                     ) : (
                         <Table>
@@ -73,7 +93,7 @@ const StudentPage = async () => {
                             </TableHeader>
 
                             <TableBody>
-                                {students.map((student) => (
+                                {filteredStudents.map((student) => (
                                     <TableRow
                                         key={student.id}
                                         className="hover:bg-muted transition-colors"

@@ -21,3 +21,29 @@ export const getUserByClerkId = async () => {
   return dbUser
 }
 
+export const getUserWithTeacherByEmail = async (email: string) => {
+  return prisma.user.findUnique({
+    where: { email },
+    include: {
+      teacher: true,
+    },
+  })
+}
+
+export const getUserWithTeacherByClerkIdOrEmail = async (
+  clerkId: string,
+  email?: string
+) => {
+  return prisma.user.findFirst({
+    where: {
+      OR: [
+        { clerkId },
+        ...(email ? [{ email }] : []),
+      ],
+    },
+    include: {
+      teacher: true,
+    },
+  })
+}
+

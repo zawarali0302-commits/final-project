@@ -288,7 +288,7 @@ model Student {
   studentMarks       StudentMark[]
   results            Result[]
 
-  @@unique([rollNo, instituteId])
+  @@unique([rollNo, instituteId, sessionId])
 }
 
 // --- Enrollment & Attendance ---

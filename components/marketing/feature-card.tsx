@@ -4,9 +4,9 @@ interface FeatureCardProps {
 }
 const FeatureCard = ({ title, description }: FeatureCardProps) => {
 return (
-<div className="p-6 rounded-2xl border">
-<h4 className="font-semibold mb-2">{title}</h4>
-<p className="text-gray-600">{description}</p>
+<div className="h-full rounded-2xl border bg-card/90 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+<h4 className="mb-2 font-semibold">{title}</h4>
+<p className="text-muted-foreground">{description}</p>
 </div>
 );
 }

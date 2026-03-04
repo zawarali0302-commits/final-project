@@ -77,3 +77,203 @@ export const addExam = async (
       },
     })
 }
+
+export const getTeacherExamsByTeacherId = async (teacherId: string) => {
+  return prisma.courseExam.findMany({
+    where: {
+      courseOffering: {
+        sectionCourses: {
+          some: {
+            teacherId,
+          },
+        },
+      },
+    },
+    include: {
+      examEvent: true,
+      courseOffering: {
+        include: {
+          course: {
+            include: {
+              department: true,
+            },
+          },
+          term: {
+            include: {
+              program: true,
+              academicYear: true,
+            },
+          },
+          sectionCourses: {
+            where: {
+              teacherId,
+            },
+            include: {
+              section: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          studentMarks: true,
+        },
+      },
+    },
+    orderBy: [
+      { examEvent: { createdAt: "desc" } },
+      { createdAt: "desc" },
+    ],
+  })
+}
+
+export const getTeacherExamDetailByExamId = async (
+  examId: string,
+  teacherId: string
+) => {
+  return prisma.courseExam.findUnique({
+    where: { id: examId },
+    include: {
+      examEvent: true,
+      courseOffering: {
+        include: {
+          course: {
+            include: {
+              department: true,
+            },
+          },
+          term: {
+            include: {
+              program: true,
+              academicYear: true,
+            },
+          },
+          sectionCourses: {
+            where: {
+              teacherId,
+            },
+            include: {
+              section: true,
+            },
+          },
+        },
+      },
+      studentMarks: true,
+    },
+  })
+}
+
+export const getStudentEnrollmentsForCourseOfferingSections = async (
+  courseOfferingId: string,
+  sectionIds: string[]
+) => {
+  return prisma.studentEnrollment.findMany({
+    where: {
+      courseOfferingId,
+      sectionId: {
+        in: sectionIds,
+      },
+    },
+    include: {
+      student: true,
+    },
+    orderBy: {
+      student: {
+        rollNo: "asc",
+      },
+    },
+  })
+}
+
+type SaveTeacherExamMarksResult =
+  | { status: "ok" }
+  | { status: "no_access" }
+  | { status: "locked" }
+  | { status: "invalid_marks" }
+
+export const saveTeacherExamMarks = async (
+  examId: string,
+  teacherId: string,
+  formData: FormData
+): Promise<SaveTeacherExamMarksResult> => {
+  const freshExam = await prisma.courseExam.findUnique({
+    where: { id: examId },
+    include: {
+      examEvent: true,
+      courseOffering: {
+        include: {
+          sectionCourses: {
+            where: {
+              teacherId,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!freshExam || freshExam.courseOffering.sectionCourses.length === 0) {
+    return { status: "no_access" }
+  }
+
+  if (freshExam.examEvent.isLocked) {
+    return { status: "locked" }
+  }
+
+  const allowedSectionIds = freshExam.courseOffering.sectionCourses.map(
+    (sc) => sc.sectionId
+  )
+  const freshEnrollments = await prisma.studentEnrollment.findMany({
+    where: {
+      courseOfferingId: freshExam.courseOfferingId,
+      sectionId: {
+        in: allowedSectionIds,
+      },
+    },
+    select: {
+      studentId: true,
+    },
+  })
+
+  const updates = []
+  for (const enrollment of freshEnrollments) {
+    const raw = formData.get(`marks_${enrollment.studentId}`)
+    if (typeof raw !== "string" || raw.trim() === "") {
+      continue
+    }
+
+    const obtainedMarks = Number(raw)
+    if (
+      Number.isNaN(obtainedMarks) ||
+      obtainedMarks < 0 ||
+      obtainedMarks > freshExam.totalMarks
+    ) {
+      return { status: "invalid_marks" }
+    }
+
+    updates.push(
+      prisma.studentMark.upsert({
+        where: {
+          studentId_courseExamId: {
+            studentId: enrollment.studentId,
+            courseExamId: freshExam.id,
+          },
+        },
+        update: {
+          obtainedMarks,
+        },
+        create: {
+          studentId: enrollment.studentId,
+          courseExamId: freshExam.id,
+          obtainedMarks,
+        },
+      })
+    )
+  }
+
+  if (updates.length > 0) {
+    await prisma.$transaction(updates)
+  }
+
+  return { status: "ok" }
+}

@@ -75,7 +75,7 @@ export default function TermForm({
               <DialogTrigger asChild>
                 <button
                   type="button"
-                  className="text-sm text-blue-600"
+                  className="text-sm font-medium text-primary hover:underline"
                 >
                   + Add Academic Year
                 </button>
@@ -102,7 +102,7 @@ export default function TermForm({
             name="academicYearId"
             required
             defaultValue={initialData?.academicYearId ?? ""}
-            className="w-full border rounded-md p-2"
+            className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
           >
             <option value="" disabled>
               Select academic year
@@ -127,7 +127,7 @@ export default function TermForm({
             required
             defaultValue={initialData?.name}
             placeholder="Semester 1 / Part 1"
-            className="w-full border rounded-md p-2"
+            className="h-10 w-full rounded-lg border border-input/80 bg-background/80 px-3 py-2 text-sm shadow-sm transition-[color,box-shadow,background-color] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
           />
         </div>
 

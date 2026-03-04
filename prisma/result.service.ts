@@ -224,7 +224,7 @@ export const getResultCardsEventByInstitute = async (
 ) => {
   const examEvent = await prisma.examEvent.findUnique({
     where: { id: examEventId },
-    include: {
+    include: {      
       program: {
         include: {
           department: {
@@ -253,6 +253,7 @@ export const getResultCardsEventByInstitute = async (
         include: {
           courseOffering: {
             include: {
+              term: true,
               course: true,
             },
           },

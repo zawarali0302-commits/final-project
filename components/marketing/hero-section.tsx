@@ -1,83 +1,94 @@
-import Link from "next/link";
-import { Button } from "../ui/button";
-import StatCard from "./stat-card";
-import { currentUser } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
-import { UserRole } from "@/app/generated/prisma/enums";
+import Link from "next/link"
+import { Button } from "../ui/button"
+import StatCard from "./stat-card"
+import { currentUser } from "@clerk/nextjs/server"
+import prisma from "@/lib/prisma"
+import { UserRole } from "@/app/generated/prisma/enums"
 
 const stats = [
-    {
-        id: 1,
-        value: "100+",
-        label: "Institutions",
-    },
-    {
-        id: 2,
-        value: "50k+",
-        label: "Students",
-    },
-    {
-        id: 3,
-        value: "99%",
-        label: "Accuracy",
-    },
-    {
-        id: 4,
-        value: "24/7",
-        label: "Availability",
-    }
+  {
+    id: 1,
+    value: "100+",
+    label: "Institutions",
+  },
+  {
+    id: 2,
+    value: "50k+",
+    label: "Students",
+  },
+  {
+    id: 3,
+    value: "99%",
+    label: "Accuracy",
+  },
+  {
+    id: 4,
+    value: "24/7",
+    label: "Availability",
+  },
 ]
 
 const HeroSection = async () => {
-    const clerkUser = await currentUser()
-    let showRegisterInstitute = false
+  const clerkUser = await currentUser()
+  let showRegisterInstitute = false
 
-    if (clerkUser) {
-        const email = clerkUser.primaryEmailAddress?.emailAddress ?? clerkUser.emailAddresses[0]?.emailAddress
+  if (clerkUser) {
+    const email =
+      clerkUser.primaryEmailAddress?.emailAddress ??
+      clerkUser.emailAddresses[0]?.emailAddress
 
-        if (email) {
-            const dbUser = await prisma.user.findUnique({
-                where: { email },
-                select: {
-                    role: true,
-                    instituteId: true,
-                },
-            })
+    if (email) {
+      const dbUser = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          role: true,
+          instituteId: true,
+        },
+      })
 
-            showRegisterInstitute = !(dbUser?.role === UserRole.ADMIN && Boolean(dbUser.instituteId))
-        }
+      showRegisterInstitute = !(
+        dbUser?.role === UserRole.ADMIN && Boolean(dbUser.instituteId)
+      )
     }
+  }
 
-    return (
-        <section className="max-w-7xl mx-auto px-6 py-24 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 className="text-4xl font-bold leading-tight mb-6">
-                    Generate Student Result Cards
-                    <span className="block text-gray-500">For Any School or College</span>
-                </h2>
-                <p className="text-gray-600 mb-8 max-w-xl">
-                    A modern platform that helps educational institutions create and
-                    manage official student result cards efficiently.
-                </p>
-                <div className="flex gap-4">
-                    {showRegisterInstitute && (
-                        <Button asChild>
-                            <Link href="/register-institute">Register Your Institute</Link>
-                        </Button>
-                    )}
-                </div>
-            </div>
+  return (
+    <section className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:items-center md:gap-12 md:py-20">
+      <div>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+          Result Management Platform
+        </p>
+        <h2 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl">
+          Generate Student Result Cards
+          <span className="mt-2 block text-muted-foreground">
+            For Schools, Colleges, and Universities
+          </span>
+        </h2>
+        <p className="mt-5 max-w-xl text-muted-foreground">
+          A modern platform to create and manage official student result cards
+          with secure workflows and consistent academic reporting.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          {showRegisterInstitute && (
+            <Button asChild>
+              <Link href="/register-institute">Register Your Institute</Link>
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link href="/login">Explore Dashboard</Link>
+          </Button>
+        </div>
+      </div>
 
-
-            <ul className="bg-white rounded-3xl shadow-lg p-8 grid grid-cols-2 gap-6 text-center">
-                {stats.map(stat => (
-                    <li key={stat.id}>
-                        <StatCard value={stat.value} label={stat.label} />
-                    </li>
-                ))}
-            </ul>
-        </section>
-    );
+      <ul className="grid grid-cols-2 gap-4 rounded-3xl border bg-card/90 p-5 shadow-sm">
+        {stats.map((stat) => (
+          <li key={stat.id}>
+            <StatCard value={stat.value} label={stat.label} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
-export default HeroSection;
+export default HeroSection

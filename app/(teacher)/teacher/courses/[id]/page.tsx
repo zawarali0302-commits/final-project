@@ -1,9 +1,10 @@
-import prisma from "@/lib/prisma"
 import { currentUser } from "@clerk/nextjs/server"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { getUserWithTeacherByEmail } from "@/prisma/user.service"
+import { getSectionCourseDetailByTeacher } from "@/prisma/sectionCourse.service"
 
 interface CourseDetailPageProps {
   params: Promise<{
@@ -18,48 +19,11 @@ const CourseDetailPage = async ({ params }: CourseDetailPageProps) => {
   if (!clerkUser?.id) redirect("/sign-in")
 
   const email = clerkUser.emailAddresses[0].emailAddress
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: {
-      teacher: true,
-    },
-  })
+  const user = await getUserWithTeacherByEmail(email)
 
   if (!user || user.role !== "TEACHER" || !user.teacher) redirect("/")
 
-  // Route param is sectionCourse.id from /teacher/courses listing page.
-  const sectionCourse = await prisma.sectionCourse.findFirst({
-    where: {
-      id,
-      teacherId: user.teacher.id,
-    },
-    include: {
-      section: true,
-      courseOffering: {
-        include: {
-          term: {
-            include: {
-              program: true,
-              academicYear: true,
-            },
-          },
-          course: {
-            include: {
-              department: true,
-            },
-          },
-          courseExams: {
-            include: {
-              examEvent: true,
-            },
-            orderBy: {
-              createdAt: "desc",
-            },
-          },
-        },
-      },
-    },
-  })
+  const sectionCourse = await getSectionCourseDetailByTeacher(id, user.teacher.id)
 
   if (!sectionCourse) notFound()
 
@@ -68,32 +32,34 @@ const CourseDetailPage = async ({ params }: CourseDetailPageProps) => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">{courseOffering.course.name}</h1>
-        <p className="text-muted-foreground">
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-7">
+          <h1 className="text-2xl font-semibold sm:text-3xl">{courseOffering.course.name}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
           Course Code: {courseOffering.course.code} | Department:{" "}
           {courseOffering.course.department.name}
-        </p>
-        <p className="text-muted-foreground">
-          Program: {courseOffering.term.program.name} | Academic Year:{" "}
-          {courseOffering.term.academicYear.name} | Term: {courseOffering.term.name} |
-          Section: {section.name}
-        </p>
-      </div>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Program: {courseOffering.term.program.name} | Academic Year:{" "}
+            {courseOffering.term.academicYear.name} | Term: {courseOffering.term.name} |
+            Section: {section.name}
+          </p>
+        </div>
+      </section>
 
       <div>
         <h2 className="text-xl font-semibold">Exams</h2>
 
         {exams.length === 0 ? (
-          <div className="mt-2 rounded-xl bg-muted p-4 text-muted-foreground">
+          <div className="mt-3 rounded-2xl border bg-card p-4 text-sm text-muted-foreground shadow-sm">
             No exams created for this course offering yet.
           </div>
         ) : (
-          <div className="mt-2 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-3 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {exams.map((exam) => {
               const isLocked = exam.examEvent.isLocked
               return (
-                <Card key={exam.id} className="transition hover:shadow-lg">
+                <Card key={exam.id} className="border-border/70 bg-card/90 py-0 transition hover:-translate-y-1 hover:shadow-md">
                   <CardHeader>
                     <CardTitle>{exam.examEvent.type}</CardTitle>
                   </CardHeader>

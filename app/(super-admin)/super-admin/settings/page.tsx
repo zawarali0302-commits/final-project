@@ -5,9 +5,13 @@ export default async function SuperAdminSettingsPage() {
   await requireRole([UserRole.SUPER_ADMIN])
 
   return (
-    <div className="space-y-2">
-      <h2 className="text-2xl font-bold">Settings</h2>
-      <p className="text-sm text-muted-foreground">Super admin settings coming soon.</p>
-    </div>
+    <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+      <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-7">
+        <h2 className="text-2xl font-semibold sm:text-3xl">Settings</h2>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+          Super admin settings coming soon.
+        </p>
+      </div>
+    </section>
   )
 }

@@ -32,7 +32,9 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
         user?.instituteId
     )
 
-    const students = section.studentEnrollments.map((se) => se.student)
+    const uniqueStudentCount = new Set(
+        section.studentEnrollments.map((enrollment) => enrollment.studentId)
+    ).size
     const termCourses = await getTermCourses(section.termId)
 
     return (
@@ -61,7 +63,12 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
 
             {/* Stats */}
                     <div className="grid grid-cols-3 gap-4">
-                        <StatCard title="Students" value={students.length} icon={<Users className="h-5 w-5 text-muted-foreground" />} />
+                        <StatCard
+                            title="Students"
+                            value={uniqueStudentCount}
+                            icon={<Users className="h-5 w-5 text-muted-foreground" />}
+                            viewAllHref={`/admin/students?sectionId=${id}`}
+                        />
                         <StatCard title="Courses" value={section.sectionCourses.length} icon={<LibraryBig className="h-5 w-5 text-muted-foreground" />} />
                         <StatCard title="Teachers" value={Array.from(new Set(section.sectionCourses.map(sc => sc.teacherId).filter(Boolean))).length} icon={<GraduationCap className="h-5 w-5 text-muted-foreground" />} />
                     </div>

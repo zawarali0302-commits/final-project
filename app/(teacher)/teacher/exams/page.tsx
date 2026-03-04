@@ -1,98 +1,48 @@
-import prisma from "@/lib/prisma"
 import { currentUser } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { getUserWithTeacherByClerkIdOrEmail } from "@/prisma/user.service"
+import { getTeacherExamsByTeacherId } from "@/prisma/exam.service"
 
 const TeacherExamsPage = async () => {
   const clerkUser = await currentUser()
   if (!clerkUser?.id) redirect("/sign-in")
 
   const email = clerkUser.emailAddresses[0]?.emailAddress
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { clerkId: clerkUser.id },
-        ...(email ? [{ email }] : []),
-      ],
-    },
-    include: { teacher: true },
-  })
+  const user = await getUserWithTeacherByClerkIdOrEmail(clerkUser.id, email)
 
   if (!user || user.role !== "TEACHER" || !user.teacher) {
     redirect("/")
   }
 
-  const exams = await prisma.courseExam.findMany({
-    where: {
-      courseOffering: {
-        sectionCourses: {
-          some: {
-            teacherId: user.teacher.id,
-          },
-        },
-      },
-    },
-    include: {
-      examEvent: true,
-      courseOffering: {
-        include: {
-          course: {
-            include: {
-              department: true,
-            },
-          },
-          term: {
-            include: {
-              program: true,
-              academicYear: true,
-            },
-          },
-          sectionCourses: {
-            where: {
-              teacherId: user.teacher.id,
-            },
-            include: {
-              section: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          studentMarks: true,
-        },
-      },
-    },
-    orderBy: [
-      { examEvent: { createdAt: "desc" } },
-      { createdAt: "desc" },
-    ],
-  })
+  const exams = await getTeacherExamsByTeacherId(user.teacher.id)
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">My Exams</h1>
-        <p className="text-lg text-muted-foreground">
-          Exams for courses assigned to you.
-        </p>
-      </div>
+      <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <div className="bg-linear-to-r from-primary/10 via-primary/5 to-transparent p-6 sm:p-7">
+          <h1 className="text-2xl font-semibold sm:text-3xl">My Exams</h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Exams for courses assigned to you.
+          </p>
+        </div>
+      </section>
 
       {exams.length === 0 ? (
-        <div className="rounded-xl bg-muted p-6 text-muted-foreground">
+        <div className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground shadow-sm">
           No exams available yet.
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {exams.map((exam) => {
             const sectionNames = exam.courseOffering.sectionCourses
               .map((sc) => sc.section.name)
               .join(", ")
 
             return (
-              <Card key={exam.id} className="transition hover:shadow-lg">
+              <Card key={exam.id} className="border-border/70 bg-card/90 py-0 transition hover:-translate-y-1 hover:shadow-md">
                 <CardHeader>
                   <CardTitle>
                     {exam.courseOffering.course.name} ({exam.examEvent.type})
