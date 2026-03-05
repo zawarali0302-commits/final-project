@@ -47,3 +47,18 @@ export const getUserWithTeacherByClerkIdOrEmail = async (
   })
 }
 
+export const getDashboardUserByEmail = async (email: string) => {
+  return prisma.user.findUnique({
+    where: { email },
+    select: {
+      role: true,
+      instituteId: true,
+      teacher: {
+        select: {
+          id: true,
+        },
+      },
+    },
+  })
+}
+
