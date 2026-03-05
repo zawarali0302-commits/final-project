@@ -179,7 +179,7 @@ export const getStudentEnrollmentsForCourseOfferingSections = async (
     },
     orderBy: {
       student: {
-        rollNo: "asc",
+        rollNo: "desc",
       },
     },
   })
