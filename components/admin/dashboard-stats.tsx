@@ -5,19 +5,7 @@ import { getUserByClerkId } from "@/prisma/user.service"
 import { getAdminDashboardStatsByInstitute } from "@/prisma/admin.service"
 
 const DashboardStats = async () => {
-  let dbUser
-  try {
-    dbUser = await getUserByClerkId()
-  } catch {
-    return <div>Not authenticated</div>
-  }
-
-  if (
-    dbUser.role !== UserRole.SUPER_ADMIN &&
-    dbUser.role !== UserRole.ADMIN
-  ) {
-    return <div>Access denied</div>
-  }
+  const dbUser = await getUserByClerkId()
 
   if (!dbUser?.instituteId) return <div>No institute found</div>
 
