@@ -34,7 +34,10 @@ export default async function ResultCardsPage({ params }: ResultCardsPageProps) 
   if (!examEvent) notFound()
 
   const sortedResults = [...examEvent.results].sort((a, b) =>
-    a.student.rollNo.localeCompare(b.student.rollNo)
+    a.student.rollNo.localeCompare(b.student.rollNo, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    })
   )
   const termNames = [
     ...new Set(examEvent.courseExams.map((item) => item.courseOffering.term.name)),
