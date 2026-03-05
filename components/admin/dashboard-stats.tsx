@@ -12,7 +12,8 @@ const DashboardStats = async () => {
     return <div>Not authenticated</div>
   }
 
-  if (![UserRole.SUPER_ADMIN, UserRole.ADMIN].includes(dbUser.role)) {
+  const allowedRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ADMIN]
+  if (!allowedRoles.includes(dbUser.role)) {
     return <div>Access denied</div>
   }
 
