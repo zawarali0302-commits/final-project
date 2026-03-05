@@ -167,7 +167,7 @@ export const getStudentEnrollmentsForCourseOfferingSections = async (
   courseOfferingId: string,
   sectionIds: string[]
 ) => {
-  return prisma.studentEnrollment.findMany({
+  const studentEnrollments = await prisma.studentEnrollment.findMany({
     where: {
       courseOfferingId,
       sectionId: {
@@ -179,10 +179,12 @@ export const getStudentEnrollmentsForCourseOfferingSections = async (
     },
     orderBy: {
       student: {
-        rollNo: "desc",
+        rollNo: "asc",
       },
     },
   })
+
+  return studentEnrollments.sort((a, b) => a.student.rollNo.localeCompare(b.student.rollNo))
 }
 
 type SaveTeacherExamMarksResult =
