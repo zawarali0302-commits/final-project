@@ -1,8 +1,8 @@
-import prisma from "@/lib/prisma"
 import { StatCard } from "./stat-card"
 import { Users, GraduationCap, FileText, LibraryBig } from "lucide-react"
 import { UserRole } from "@/app/generated/prisma/enums"
 import { getUserByClerkId } from "@/prisma/user.service"
+import { getAdminDashboardStatsByInstitute } from "@/prisma/admin.service"
 
 const DashboardStats = async () => {
   let dbUser
@@ -12,35 +12,17 @@ const DashboardStats = async () => {
     return <div>Not authenticated</div>
   }
 
-  const allowedRoles: UserRole[] = [UserRole.SUPER_ADMIN, UserRole.ADMIN]
-  if (!allowedRoles.includes(dbUser.role)) {
+  if (
+    dbUser.role !== UserRole.SUPER_ADMIN &&
+    dbUser.role !== UserRole.ADMIN
+  ) {
     return <div>Access denied</div>
   }
 
   if (!dbUser?.instituteId) return <div>No institute found</div>
 
-  const [teachers, students, programs, results] = await Promise.all([
-    prisma.teacher.count({
-      where: { instituteId: dbUser.instituteId },
-    }),
-    prisma.student.count({
-      where: { instituteId: dbUser.instituteId },
-    }),
-    prisma.program.count({
-      where: {
-        department: {
-          instituteId: dbUser.instituteId,
-        },
-      },
-    }),
-    prisma.result.count({
-      where: {
-        student: {
-          instituteId: dbUser.instituteId,
-        },
-      },
-    }),
-  ])
+  const { teachers, students, programs, results } =
+    await getAdminDashboardStatsByInstitute(dbUser.instituteId)
 
   const statItems = [
     {
