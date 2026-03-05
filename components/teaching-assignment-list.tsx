@@ -1,7 +1,3 @@
-import { Trash } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { deleteTeachingAssignment } from "@/app/actions/teacher.actions"
-
 export function TeachingAssignmentsList({
   assignments,
 }: {
