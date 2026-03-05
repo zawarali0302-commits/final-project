@@ -22,7 +22,7 @@ const FeaturesSection = () => {
         <section className="py-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
                 <h3 className="text-3xl font-semibold text-center mb-12">
-                    Why Choose ResultCard?
+                    Why Choose Resultify?
                 </h3>
                 <ul className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {features.map(feature => (
