@@ -2,9 +2,9 @@ import Link from "next/link"
 import { Button } from "../ui/button"
 import StatCard from "./stat-card"
 import { currentUser } from "@clerk/nextjs/server"
-import prisma from "@/lib/prisma"
 import { UserRole } from "@/app/generated/prisma/enums"
 import { SignInButton, SignUpButton } from "@clerk/nextjs"
+import { getDashboardUserByEmail } from "@/prisma/user.service"
 
 const stats = [
   {
@@ -40,13 +40,7 @@ const HeroSection = async () => {
       clerkUser.emailAddresses[0]?.emailAddress
 
     if (email) {
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          role: true,
-          instituteId: true,
-        },
-      })
+      const dbUser = await getDashboardUserByEmail(email)
 
       showRegisterInstitute = !(
         dbUser?.role === UserRole.ADMIN && Boolean(dbUser.instituteId)
