@@ -129,7 +129,7 @@ export async function createInstituteWithAdmin(
   })
 }
 
-export const updateInstitute = async (id: string, data: {
+export const editInstitute = async (id: string, data: {
   name?: string
   type?: InstituteType
   location?: string

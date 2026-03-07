@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { InstituteType } from "@/app/generated/prisma/enums"
+import { updateInstitute } from "@/app/actions/institute.actions"
 
 interface EditInstituteFormProps {
   institute: {
@@ -20,8 +21,8 @@ interface EditInstituteFormProps {
 export default function EditInstituteForm({
   institute,
 }: EditInstituteFormProps) {
-  const { execute: saveProfile, isPending: isProfileSaving } = useServerAction(
-    updateAdminInstituteProfile
+  const { execute, isPending} = useServerAction(
+    updateInstitute.bind(null, institute.id),
   )
 
   return (
@@ -34,7 +35,7 @@ export default function EditInstituteForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={saveProfile} className="space-y-4">
+          <form action={execute} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium">Institute Name</label>
@@ -71,8 +72,8 @@ export default function EditInstituteForm({
               </div>
             </div>
 
-            <Button type="submit" disabled={isProfileSaving}>
-              {isProfileSaving ? "Saving..." : "Save Profile"}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Saving..." : "Save Profile"}
             </Button>
           </form>
         </CardContent>

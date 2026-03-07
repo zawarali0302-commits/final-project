@@ -1,9 +1,9 @@
 "use server"
 
 import { currentUser } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
 import { InstituteType } from "../generated/prisma/enums"
-import { createInstituteWithAdmin, updateInstitute } from "@/prisma/institute.service"
+import { createInstituteWithAdmin, editInstitute } from "@/prisma/institute.service"
+import { revalidatePath } from "next/cache"
 
 /**
  * Server action to create institute + admin
@@ -29,16 +29,23 @@ try {
 }
 }
 
-export const editInstitute = async (id: string, data: FormData) => {
+export const updateInstitute = async (id: string, data: FormData) => {
   const name = data.get("name") as string
   const type = data.get("type") as InstituteType
   const location = data.get("location") as string
 
-  await updateInstitute(id, {
-    name,
-    type,
-    location,
-  })
+  try {
+    await editInstitute(id, {
+      name,
+      type,
+      location,
+    })
 
-  redirect("/super-admin/institutes")
+    revalidatePath("/admin/settings")
+    revalidatePath("/admin")
+    revalidatePath("/super-admin/institutes")
+    return { success: true, message: "Institute updated successfully" }
+  } catch (error) {
+    return { success: false, message: (error as Error).message }
+  }
 }
