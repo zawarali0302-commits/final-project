@@ -1,5 +1,5 @@
 import { UserRole } from "@/app/generated/prisma/enums"
-import AdminSettingsForm from "@/components/forms/admin-settings-form"
+import EditInstituteForm from "@/components/forms/edit-institute-form"
 import { getInstituteById } from "@/prisma/institute.service"
 import { requireRole } from "@/lib/requireRole"
 
@@ -45,7 +45,7 @@ export default async function AdminSettingsPage() {
         </div>
       </div>
 
-      <AdminSettingsForm
+      <EditInstituteForm
         institute={{
           id: institute.id,
           name: institute.name,

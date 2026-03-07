@@ -6,19 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { InstituteType } from "@/app/generated/prisma/enums"
 
-interface AdminSettingsFormProps {
+interface EditInstituteFormProps {
   institute: {
     id: string
     name: string
     location: string
-    type: "SCHOOL" | "COLLEGE" | "UNIVERSITY"
+    type: InstituteType
   }
 }
 
-export default function AdminSettingsForm({
+export default function EditInstituteForm({
   institute,
-}: AdminSettingsFormProps) {
+}: EditInstituteFormProps) {
   const { execute: saveProfile, isPending: isProfileSaving } = useServerAction(
     updateAdminInstituteProfile
   )
@@ -52,9 +53,9 @@ export default function AdminSettingsForm({
                     <SelectValue placeholder="Select institute type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="SCHOOL">School</SelectItem>
-                    <SelectItem value="COLLEGE">College</SelectItem>
-                    <SelectItem value="UNIVERSITY">University</SelectItem>
+                    <SelectItem value={InstituteType.SCHOOL}>School</SelectItem>
+                    <SelectItem value={InstituteType.COLLEGE}>College</SelectItem>
+                    <SelectItem value={InstituteType.UNIVERSITY}>University</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
