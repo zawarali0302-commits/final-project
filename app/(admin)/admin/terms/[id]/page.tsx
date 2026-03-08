@@ -2,12 +2,14 @@ import { deleteSection } from "@/app/actions/section.actions"
 import Dropdown from "@/components/dropdown"
 import AssignTermCourseDialog from "@/components/forms/assign-term-course-dialog"
 import { AddSectionDialog } from "@/components/forms/add-section-dialog"
+import PromoteAllStudentsForm from "@/components/forms/promote-all-students-form"
 import UnassignTermCourseForm from "@/components/forms/unassign-term-course-form"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getCoursesByInstituteId } from "@/prisma/course.service"
-import { getTermById } from "@/prisma/term.service"
+import { getAcademicYearsByInstitute } from "@/prisma/academicYear.service"
+import { getTermById, getTerms } from "@/prisma/term.service"
 import { getUserByClerkId } from "@/prisma/user.service"
 import Link from "next/link"
 
@@ -30,28 +32,55 @@ export default async function TermDetailPage({ params }: TermDetailPageProps) {
     const courses = user?.instituteId
         ? await getCoursesByInstituteId(user.instituteId)
         : []
+    const academicYears = user?.instituteId
+        ? await getAcademicYearsByInstitute(user.instituteId)
+        : []
+    const programTerms = await getTerms(term.programId)
+    const promotionTerms = programTerms.filter((item) => item.id !== term.id)
+    const promotionSections = promotionTerms.flatMap((item) =>
+        item.sections.map((section) => ({
+            id: section.id,
+            name: section.name,
+            termId: item.id,
+        }))
+    )
 
     return (
         <div className="space-y-6 max-w-4xl">
             {/* Term Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-3">
                 <div>
                     <h1 className="text-2xl font-bold">{term.name}</h1>
                     <p className="text-gray-600">
                         Program: {term.program.name} | Academic Year: {term.academicYear.name}
                     </p>
                 </div>
-                <Button asChild>
+                <div className="flex items-center gap-2">
+                    <PromoteAllStudentsForm
+                        sourceTermId={term.id}
+                        academicYears={academicYears.map((item) => ({
+                            id: item.id,
+                            name: item.name,
+                        }))}
+                        terms={promotionTerms.map((item) => ({
+                            id: item.id,
+                            name: item.name,
+                            academicYearId: item.academicYearId,
+                        }))}
+                        sections={promotionSections}
+                    />
+                    <Button asChild>
 
-                    <Link
-                        href={{
-                            pathname: `/admin/terms/${id}/edit`,
-                            query: { programId: term.programId },
-                        }}
-                    >
-                        Edit Term
-                    </Link>
-                </Button>
+                        <Link
+                            href={{
+                                pathname: `/admin/terms/${id}/edit`,
+                                query: { programId: term.programId },
+                            }}
+                        >
+                            Edit Term
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* Sections */}

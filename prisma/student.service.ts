@@ -60,6 +60,26 @@ export const getStudentById = async (id: string) => {
   return await prisma.student.findUnique({
     where: { id },
     include: {
+      session: true,
+      institute: true,
+      results: {
+        include: {
+          examEvent: {
+            include: {
+              courseExams: {
+                include: {
+                  courseOffering: {
+                    include: {
+                      course: true,
+                    },
+                  },
+                  studentMarks: true,
+                },
+              },
+            },
+          },
+        },
+      },
       program: {
         include: {
           department: true,

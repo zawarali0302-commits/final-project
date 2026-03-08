@@ -143,7 +143,16 @@ export default async function ResultCardsPage({ params }: ResultCardsPageProps) 
                     <TableRow key={result.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{result.student.rollNo}</TableCell>
-                      <TableCell>{result.student.name}</TableCell>
+                      <TableCell>
+                        <Link href={{
+                          pathname: `/admin/result-card/`,
+                          query: { studentId: result.studentId },
+                        }}
+                        className="hover:underline"
+                        >
+                          {result.student.name}
+                        </Link>
+                        </TableCell>
                       {examEvent.courseExams.map((courseExam) => {
                         const mark =
                           courseExam.studentMarks.find(
